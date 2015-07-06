@@ -22,59 +22,102 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         }
 
+        sub lame_set_in_samplerate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_in_samplerate(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method in-samplerate() returns Int 
+            is accessor-facade(&lame_get_in_samplerate, &lame_set_in_samplerate, Code, &check.assuming('in-samplerate')) {}
+
+        sub lame_set_num_channels(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_num_channels(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method num-channels() returns Int
+            is accessor-facade(&lame_get_num_channels, &lame_set_num_channels, Code, &check.assuming('num-channels')) {}
+
+        sub lame_set_brate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_brate(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method bitrate() returns Int
+            is accessor-facade(&lame_get_brate, &lame_set_brate, Code, &check.assuming('bitrate')) { }
+
+        sub lame_set_quality(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_quality(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method quality() returns Int
+            is accessor-facade(&lame_get_quality, &lame_set_quality, Code, &check.assuming('quality')) { }
+
+
+        sub lame_set_mode(GlobalFlags, MPEG-Mode) returns int32 is native("libmp3lame") { * }
+        sub lame_get_mode(GlobalFlags) returns MPEG-Mode is native("libmp3lame") { * }
+
+        method mode() returns MPEG-Mode
+            is accessor-facade(&lame_get_mode, &lame_set_mode, Code, &check.assuming('mode')) { }
+
+
+        # below less commonly used
+
         sub lame_set_num_samples(GlobalFlags, uint64) returns int32 is native("libmp3lame") { * }
         sub lame_get_num_samples(GlobalFlags) returns uint64 is native("libmp3lame") { * }
 
-        method num-samples() returns Int is accessor-facade(&lame_get_num_samples, &lame_set_num_samples, Code, &check.assuming('num-samples')) { }
+        method num-samples() returns Int 
+            is accessor-facade(&lame_get_num_samples, &lame_set_num_samples, Code, &check.assuming('num-samples')) { }
 
-        sub lame_set_in_samplerate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_in_samplerate(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_num_channels(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_num_channels(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_scale(GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
-        sub lame_get_scale(GlobalFlags) returns Num is native("libmp3lame") { * }
-        sub lame_set_scale_left(GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
-        sub lame_get_scale_left(GlobalFlags) returns Num is native("libmp3lame") { * }
+
+        sub lame_set_scale(GlobalFlags, num32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_scale(GlobalFlags) returns num32 is native("libmp3lame") { * }
+
+        method scale() returns Num
+            is accessor-facade(&lame_get_scale, &lame_set_scale, Code, &check.assuming("scale")) { }
+
+        sub lame_set_scale_left(GlobalFlags, num32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_scale_left(GlobalFlags) returns num32 is native("libmp3lame") { * }
+
+        method scale-left() returns Num
+            is accessor-facade(&lame_get_scale_left, &lame_set_scale_left, Code, &check.assuming("scale-left")) { }
+
         sub lame_set_scale_right(GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
         sub lame_get_scale_right(GlobalFlags) returns Num is native("libmp3lame") { * }
+
+        method scale-right() returns Num
+            is accessor-facade(&lame_get_scale_right, &lame_set_scale_right, Code, &check.assuming("scale-right")) { }
+
         sub lame_set_out_samplerate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_out_samplerate(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method out-samplerate() returns Int 
+            is accessor-facade(&lame_get_out_samplerate, &lame_set_out_samplerate, Code, &check.assuming('out-samplerate')) {}
+
+
         sub lame_set_analysis(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_analysis(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method set-analysis() returns Int
+            is accessor-facade(&lame_get_analysis, &lame_set_analysis, Code, &check.assuming("set-analysis")) { }
+
+
         sub lame_set_bWriteVbrTag(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_bWriteVbrTag(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method write-vbr-tag() returns Bool
+            is accessor-facade(&lame_get_bWriteVbrTag, &lame_set_bWriteVbrTag, Code, &check.assuming("write-vbr-tag")) { }
+
         sub lame_set_decode_only(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_decode_only(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_quality(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_quality(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_mode(GlobalFlags, MPEG-Mode) returns int32 is native("libmp3lame") { * }
-        sub lame_get_mode(GlobalFlags) returns MPEG-Mode is native("libmp3lame") { * }
-        sub lame_set_mode_automs(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_mode_automs(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_force_ms(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_force_ms(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_free_format(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_free_format(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_findReplayGain(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_findReplayGain(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_decode_on_the_fly(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_decode_on_the_fly(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_ReplayGain_input(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_ReplayGain_input(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_ReplayGain_decode(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_ReplayGain_decode(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_findPeakSample(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_findPeakSample(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method decode-only() returns Bool
+            is accessor-facade(&lame_get_decode_only, &lame_set_decode_only, Code, &check.assuming('decode-only')) { }
+
+
         sub lame_set_nogap_total(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_nogap_total(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+        method nogap-total() returns Int
+            is accessor-facade(&lame_get_nogap_total, &lame_set_nogap_total, Code, &check.assuming("nogap-total")) { }
+
         sub lame_set_nogap_currentindex(GlobalFlags , int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_nogap_currentindex(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        # Not sure if these will work
-        sub lame_set_errorf(GlobalFlags, &cb ( Str $fmt, *@args) ) returns int32 is native("libmp3lame") { * }
-        sub lame_set_debugf(GlobalFlags, &cb ( Str $fmt, *@args)) returns int32 is native("libmp3lame") { * }
-        sub lame_set_msgf  (GlobalFlags, &cb ( Str $fmt, *@args)) returns int32 is native("libmp3lame") { * }
-        sub lame_set_brate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_brate(GlobalFlags) returns int32 is native("libmp3lame") { * }
+
+
         sub lame_set_compression_ratio(GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
         sub lame_get_compression_ratio(GlobalFlags) returns Num is native("libmp3lame") { * }
         sub lame_set_preset( GlobalFlags, int32 ) returns int32 is native("libmp3lame") { * }
@@ -85,8 +128,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_get_original(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_error_protection(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_error_protection(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_padding_type(GlobalFlags, PaddingType) returns int32 is native("libmp3lame") { * }
-        sub lame_get_padding_type(GlobalFlags) returns PaddingType is native("libmp3lame") { * }
         sub lame_set_extension(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_extension(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_strict_ISO(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
@@ -175,6 +216,12 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_get_bitrate(int32, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_samplerate(int32, int32 ) returns int32 is native("libmp3lame") { * }
 
+        # Not sure if these will work
+        sub lame_set_errorf(GlobalFlags, &cb ( Str $fmt, *@args) ) returns int32 is native("libmp3lame") { * }
+        sub lame_set_debugf(GlobalFlags, &cb ( Str $fmt, *@args)) returns int32 is native("libmp3lame") { * }
+        sub lame_set_msgf  (GlobalFlags, &cb ( Str $fmt, *@args)) returns int32 is native("libmp3lame") { * }
+
+
         sub lame_init_params(GlobalFlags) returns int32 is native('libmp3lame') { * }
 
         method init() {
@@ -192,7 +239,22 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         }
     }
 
-    has GlobalFlags $!gfp;
+    has GlobalFlags $!gfp handles <
+                                    in-samplerate
+                                    num-channels
+                                    bitrate
+                                    quality
+                                    mode
+                                    num-samples
+                                    scale
+                                    scale-left
+                                    scale-right
+                                    out-samplerate
+                                    set-analysis
+                                    write-vbr-tag
+                                    decode-only
+                                    nogap-total
+                                  >;
 
     has Bool $!initialised = False;
 
