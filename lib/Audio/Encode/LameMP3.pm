@@ -12,6 +12,9 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     enum MPEG-Mode <Stereo JointStereo DualChannel Mono NotSet>;
     enum PaddingType <No All Adjust>;
 
+    # Values returned by the encode functions
+    enum EncodeError ( Okay => 0, BuffTooSmall => -1, Malloc => -2, NotInit => -3, Psycho => -4 );
+
     class GlobalFlags is repr('CPointer') {
         sub lame_init() returns GlobalFlags is native('libmp3lame') { * }
         method new() {
@@ -21,6 +24,39 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub check(Str $what, Int $rc) {
 
         }
+
+        # encode functions all return the number of bytes in the encoded output or a value less than 0
+        # from the enum EncodeError above
+
+        # Non-interleaved inputs are left, right. num_samples is actually number of frames.
+        sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # not sure what this one is about. The include file comment suggests it is ints but the signature suggests otherwise
+        sub lame_encode_buffer_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # seemed to be scaled to floats as we know them
+        sub lame_encode_buffer_ieee_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # ignoring the long variant as it appears to be a mistake
+        # neither have an interleaved variant
+        sub lame_encode_buffer_long2(GlobalFlags, CArray[int64], CArray[int64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # the include suggests that the scaling may be wonky on this.
+        sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
+        sub lame_encode_flush(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        # nogap allows you to continue using the same encoder - useful for streaming
+        sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         sub lame_set_in_samplerate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_in_samplerate(GlobalFlags) returns int32 is native("libmp3lame") { * }
@@ -156,7 +192,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_get_VBR_max_bitrate_kbps(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_VBR_hard_min(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_VBR_hard_min(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_preset_expopts(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_set_lowpassfreq(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_lowpassfreq(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_lowpasswidth(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
@@ -177,14 +212,8 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_get_ATHlower(GlobalFlags) returns Num is native("libmp3lame") { * }
         sub lame_set_athaa_type( GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_athaa_type( GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_athaa_loudapprox( GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_athaa_loudapprox( GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_athaa_sensitivity( GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
         sub lame_get_athaa_sensitivity( GlobalFlags ) returns Num is native("libmp3lame") { * }
-        sub lame_set_cwlimit(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_cwlimit(GlobalFlags) returns int32 is native("libmp3lame") { * }
-        sub lame_set_allow_diff_short(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
-        sub lame_get_allow_diff_short(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_useTemporal(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_useTemporal(GlobalFlags) returns int32 is native("libmp3lame") { * }
         sub lame_set_interChRatio(GlobalFlags, Num) returns int32 is native("libmp3lame") { * }
@@ -213,6 +242,7 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_set_write_id3tag_automatic(GlobalFlags , int32)  is native("libmp3lame") { * }
         sub lame_get_write_id3tag_automatic(GlobalFlags) returns int32 is native("libmp3lame") { * }
 
+        # Not the same interface
         sub lame_get_bitrate(int32, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_samplerate(int32, int32 ) returns int32 is native("libmp3lame") { * }
 
@@ -231,6 +261,28 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
                 X::LameError.new(message => "Error initialising parameters").throw;
             }
         }
+
+        # This is not necessary but using flush_nogap and this it is possible to reuse
+        # the same encoder which may be useful for streaming
+        sub lame_init_bitstream(GlobalFlags) returns int32 is native('libmp3lame') { * }
+
+        method init-bitstream() {
+            my $rc = lame_init_bitstream(self);
+
+            if $rc != 0 {
+                X::LameError.new(message => "Error (re)initialising bitstream").throw;
+            }
+        }
+
+        # The API docs and the include differ in the necessity of calling this.
+        # As we'll only be "streaming" I'll hedge.
+        
+        sub lame_mp3_tags_fid(GlobalFlags, Pointer) is native('libmp3lame') { * }
+
+        method mp3-tags() {
+            lame_mp3_tags_fid(self, Pointer);
+        }
+
 
         sub lame_close(GlobalFlags) is native('libmp3lame') { * }
 
