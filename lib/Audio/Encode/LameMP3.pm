@@ -83,8 +83,8 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             is accessor-facade(&lame_get_quality, &lame_set_quality, Code, &check.assuming('quality')) { }
 
 
-        sub lame_set_mode(GlobalFlags, MPEG-Mode) returns int32 is native("libmp3lame") { * }
-        sub lame_get_mode(GlobalFlags) returns MPEG-Mode is native("libmp3lame") { * }
+        sub lame_set_mode(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
+        sub lame_get_mode(GlobalFlags) returns int32 is native("libmp3lame") { * }
 
         method mode() returns MPEG-Mode
             is accessor-facade(&lame_get_mode, &lame_set_mode, Code, &check.assuming('mode')) { }
