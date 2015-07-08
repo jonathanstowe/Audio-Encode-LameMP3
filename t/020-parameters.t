@@ -33,6 +33,7 @@ for @params -> $param {
     ok($val.defined, "and got some value back");
 }
 
+done;
 
 
 # vim: expandtab shiftwidth=4 ft=perl6
