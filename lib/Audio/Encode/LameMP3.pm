@@ -4,8 +4,38 @@ use AccessorFacade;
 
 class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
+    enum EncodeError ( Okay => 0, BuffTooSmall => -1, Malloc => -2, NotInit => -3, Psycho => -4 );
+
     class X::LameError is Exception {
         has Str $.message;
+    }
+
+    class X::EncodeError is X::LameError {
+        has Str $.message;
+        has EncodeError $.error;
+
+        multi method message() {
+            if not $!message.defined {
+                $!message = do given $!error {
+                    when BuffTooSmall {
+                        "supplied buffer too small for encoded output";
+                    }
+                    when Malloc {
+                        "unable to allocate enough memory to perform encoding";
+                    }
+                    when NotInit {
+                        "global flags not initialised before encoding";
+                    }
+                    when Psycho {
+                        "problem with psychoacoustic model";
+                    }
+                    default {
+                        "unknown or not an error";
+                    }
+                }
+            }
+            $!message;
+        }
     }
 
     enum VBR-Mode <Off MT RH ABR MTRH>;
@@ -13,7 +43,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     enum PaddingType <No All Adjust>;
 
     # Values returned by the encode functions
-    enum EncodeError ( Okay => 0, BuffTooSmall => -1, Malloc => -2, NotInit => -3, Psycho => -4 );
 
     class GlobalFlags is repr('CPointer') {
         sub lame_init() returns GlobalFlags is native('libmp3lame') { * }
@@ -30,6 +59,51 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         # Non-interleaved inputs are left, right. num_samples is actually number of frames.
         sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        multi method encode-short(@left, @right) returns Buf {
+
+            if (@left.elems == @right.elems ) {
+                sub copy-to-carray(@items, Mu $type) returns CArray {
+                    my $array = CArray[$type].new;
+                    $array[$_] = @items[$_] for ^@items.elems;
+                    $array;
+                }
+
+                sub get-buffer-size(Int $no-frames ) returns Int {
+                    my $num = ((1.25 * $no-frames) + 7200).Int;
+                    $num;
+                }
+
+                sub get-out-buffer(Int $size) returns CArray[uint8] {
+                    my $buff =  CArray[uint8].new;
+                    $buff[$size] = 0;
+                    $buff;
+                }
+
+                sub copy-carray-to-buf(CArray $array, Int $no-elems) returns Buf {
+                    my $buf = Buf.new;
+                    $buf[$_] = $array[$_] for ^$no-elems;
+                    $buf;
+                }
+
+                my $left-in   = copy-to-carray(@left, int16);
+                my $right-in  = copy-to-carray(@right, int16);
+                my $frames    = @left.elems;
+                my $buff-size = get-buffer-size($frames);
+                my $buffer    = get-out-buffer($buff-size);
+
+                my $bytes-out = lame_encode_buffer(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
+
+                if $bytes-out < 0 {
+                    X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+                }
+                copy-carray-to-buf($buffer, $bytes-out);
+            }
+            else {
+                X::EncodeError.new(message => "not equal length frames in");
+            }
+
+        }
 
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
