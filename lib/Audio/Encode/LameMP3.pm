@@ -79,7 +79,7 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             $buf;
         }
 
-        method encode-two(@left, @right, &encode-func, Mu $type ) {
+        method encode-two(@left, @right, &encode-func, Mu $type ) returns Buf {
             if (@left.elems == @right.elems ) {
 
                 my $left-in   = copy-to-carray(@left, $type);
@@ -118,9 +118,17 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         # seemed to be scaled to floats as we know them
         sub lame_encode_buffer_ieee_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
+        multi method encode-float(@left, @right) returns Buf {
+            self.encode-two(@left, @right, &lame_encode_buffer_ieee_float, num32);
+        }
+
         sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        multi method encode-double(@left, @right) returns Buf {
+            self.encode-two(@left, @right, &lame_encode_buffer_ieee_float, num64);
+        }
 
         sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
@@ -128,12 +136,21 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         # neither have an interleaved variant
         sub lame_encode_buffer_long2(GlobalFlags, CArray[int64], CArray[int64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
+        multi method encode-long(@left, @right) returns Buf {
+            self.encode-two(@left, @right, &lame_encode_buffer_long2, int64);
+        }
+
         # the include suggests that the scaling may be wonky on this.
         sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        multi method encode-int(@left, @right) returns Buf {
+            self.encode-two(@left, @right, &lame_encode_buffer_int, int32);
+        }
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
         sub lame_encode_flush(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
+        # allocate an overly long buffer to take the last bit
         method encode-flush() returns Buf {
             my $buffer = get-out-buffer(8192);
             my $bytes-out = lame_encode_flush(self, $buffer, 8192);
@@ -408,6 +425,22 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     multi method encode-short(@left, @right) returns Buf {
         $!gfp.encode-short(@left, @right);
+    }
+
+    multi method encode-int(@left, @right) returns Buf {
+        $!gfp.encode-int(@left, @right);
+    }
+
+    multi method encode-long(@left, @right) returns Buf {
+        $!gfp.encode-long(@left, @right);
+    }
+
+    multi method encode-float(@left, @right) returns Buf {
+        $!gfp.encode-float(@left, @right);
+    }
+
+    multi method encode-double(@left, @right) returns Buf {
+        $!gfp.encode-double(@left, @right);
     }
 
     method encode-flush() returns Buf {
