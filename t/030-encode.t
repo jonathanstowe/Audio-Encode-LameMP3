@@ -32,14 +32,15 @@ lives-ok { $encoder.init }, "init";
 
 my $buf;
 
-my $out-file = "tt.mp3".IO.open(:w, :bin);
+my $out-file = $test-data.child("tt.mp3");
+my $out-fh = $out-file.open(:w, :bin);
 loop {
         my @in-frames = $sndfile.read-short(4192);
         my ($left, $right) = uninterleave(@in-frames);
         lives-ok { $buf = $encoder.encode-short($left, $right) }, "encode { @in-frames / $sndfile.channels } frames";
         ok($buf ~~ Buf , "returned buffer is a Buf");
         ok($buf.elems > 0, "and there are some elements");
-        $out-file.write($buf);
+        $out-fh.write($buf);
         last if ( @in-frames / $sndfile.channels ) != 4192;
 }
 
@@ -49,8 +50,14 @@ $sndfile.close();
 lives-ok { $buf = $encoder.encode-flush() }, "encode-flush";
 ok($buf ~~ Buf , "returned buffer is a Buf");
 ok($buf.elems > 0, "and there are some elements");
-$out-file.write($buf);
-$out-file.close;
+$out-fh.write($buf);
+$out-fh.close;
+
+if ( "/usr/bin/file".IO.x ) {
+    like qqx/file $out-file }/, rx/MPEG/, "and it's a MP3 file";
+}
+
+$out-file.unlink;
 
 sub uninterleave(@a) {
     my ( $b, $c);
