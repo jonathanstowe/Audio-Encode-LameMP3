@@ -100,6 +100,26 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             }
         }
 
+        method encode-interleaved(@frames, &encode-func, Mu $type ) returns Buf {
+            if (@frames.elems % 2 ) == 0  {
+
+                my $frames-in   = copy-to-carray(@frames, $type);
+                my $frames    = @frames.elems / 2;
+                my $buff-size = get-buffer-size($frames);
+                my $buffer    = get-out-buffer($buff-size);
+
+                my $bytes-out = &encode-func(self, $frames-in, $frames, $buffer, $buff-size);
+
+                if $bytes-out < 0 {
+                    X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+                }
+                copy-carray-to-buf($buffer, $bytes-out);
+            }
+            else {
+                X::EncodeError.new(message => "not equal length frames in");
+            }
+        }
+
         # encode functions all return the number of bytes in the encoded output or a value less than 0
         # from the enum EncodeError above
 
