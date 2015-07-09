@@ -56,6 +56,29 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         }
 
+        # utilities
+        sub copy-to-carray(@items, Mu $type) returns CArray {
+            my $array = CArray[$type].new;
+            $array[$_] = @items[$_] for ^@items.elems;
+            $array;
+        }
+
+        sub get-buffer-size(Int $no-frames ) returns Int {
+            my $num = ((1.25 * $no-frames) + 7200).Int;
+            $num;
+        }
+
+        sub get-out-buffer(Int $size) returns CArray[uint8] {
+            my $buff =  CArray[uint8].new;
+            $buff[$size] = 0;
+            $buff;
+        }
+        sub copy-carray-to-buf(CArray $array, Int $no-elems) returns Buf {
+            my $buf = Buf.new;
+            $buf[$_] = $array[$_] for ^$no-elems;
+            $buf;
+        }
+
         # encode functions all return the number of bytes in the encoded output or a value less than 0
         # from the enum EncodeError above
 
@@ -65,28 +88,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         multi method encode-short(@left, @right) returns Buf {
 
             if (@left.elems == @right.elems ) {
-                sub copy-to-carray(@items, Mu $type) returns CArray {
-                    my $array = CArray[$type].new;
-                    $array[$_] = @items[$_] for ^@items.elems;
-                    $array;
-                }
-
-                sub get-buffer-size(Int $no-frames ) returns Int {
-                    my $num = ((1.25 * $no-frames) + 7200).Int;
-                    $num;
-                }
-
-                sub get-out-buffer(Int $size) returns CArray[uint8] {
-                    my $buff =  CArray[uint8].new;
-                    $buff[$size] = 0;
-                    $buff;
-                }
-
-                sub copy-carray-to-buf(CArray $array, Int $no-elems) returns Buf {
-                    my $buf = Buf.new;
-                    $buf[$_] = $array[$_] for ^$no-elems;
-                    $buf;
-                }
 
                 my $left-in   = copy-to-carray(@left, int16);
                 my $right-in  = copy-to-carray(@right, int16);
@@ -130,6 +131,16 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
         sub lame_encode_flush(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        method encode-flush() returns Buf {
+            my $buffer = get-out-buffer(8192);
+            my $bytes-out = lame_encode_flush(self, $buffer, 8192);
+
+            if $bytes-out < 0 {
+                X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+            }
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
 
         # nogap allows you to continue using the same encoder - useful for streaming
         sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
@@ -391,6 +402,14 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             $!gfp.init;
             $!initialised = True;
         }
+    }
+
+    multi method encode-short(@left, @right) returns Buf {
+        $!gfp.encode-short(@left, @right);
+    }
+
+    method encode-flush() returns Buf {
+        $!gfp.encode-flush();
     }
 
     sub get_lame_version() returns Str is native('libmp3lame') { * }
