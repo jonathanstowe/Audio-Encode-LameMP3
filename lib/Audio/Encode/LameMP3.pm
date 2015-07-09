@@ -79,23 +79,16 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             $buf;
         }
 
-        # encode functions all return the number of bytes in the encoded output or a value less than 0
-        # from the enum EncodeError above
-
-        # Non-interleaved inputs are left, right. num_samples is actually number of frames.
-        sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
-
-        multi method encode-short(@left, @right) returns Buf {
-
+        method encode-two(@left, @right, &encode-func, Mu $type ) {
             if (@left.elems == @right.elems ) {
 
-                my $left-in   = copy-to-carray(@left, int16);
-                my $right-in  = copy-to-carray(@right, int16);
+                my $left-in   = copy-to-carray(@left, $type);
+                my $right-in  = copy-to-carray(@right, $type);
                 my $frames    = @left.elems;
                 my $buff-size = get-buffer-size($frames);
                 my $buffer    = get-out-buffer($buff-size);
 
-                my $bytes-out = lame_encode_buffer(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
+                my $bytes-out = &encode-func(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
 
                 if $bytes-out < 0 {
                     X::EncodeError.new(error => EncodeError($bytes-out)).throw;
@@ -105,7 +98,16 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             else {
                 X::EncodeError.new(message => "not equal length frames in");
             }
+        }
 
+        # encode functions all return the number of bytes in the encoded output or a value less than 0
+        # from the enum EncodeError above
+
+        # Non-interleaved inputs are left, right. num_samples is actually number of frames.
+        sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        multi method encode-short(@left, @right) returns Buf {
+            self.encode-two(@left, @right, &lame_encode_buffer, int16);
         }
 
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
