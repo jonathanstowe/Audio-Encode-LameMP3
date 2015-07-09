@@ -104,7 +104,7 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             if (@frames.elems % 2 ) == 0  {
 
                 my $frames-in   = copy-to-carray(@frames, $type);
-                my $frames    = @frames.elems / 2;
+                my $frames    = (@frames.elems / 2).Int;
                 my $buff-size = get-buffer-size($frames);
                 my $buffer    = get-out-buffer($buff-size);
 
@@ -132,6 +132,10 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
+        multi method encode-short(@frames ) returns Buf {
+            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved, int16);
+        }
+
         # not sure what this one is about. The include file comment suggests it is ints but the signature suggests otherwise
         sub lame_encode_buffer_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
@@ -144,6 +148,10 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
+        multi method encode-float(@frames ) returns Buf {
+            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved_ieee_float, num32);
+        }
+
         sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-double(@left, @right) returns Buf {
@@ -151,6 +159,10 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         }
 
         sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+
+        multi method encode-double(@frames ) returns Buf {
+            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved_ieee_double, num64);
+        }
 
         # ignoring the long variant as it appears to be a mistake
         # neither have an interleaved variant
@@ -169,11 +181,13 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
         sub lame_encode_flush(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
+        # nogap allows you to continue using the same encoder - useful for streaming
+        sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         # allocate an overly long buffer to take the last bit
-        method encode-flush() returns Buf {
+        method encode-flush(Bool :$nogap = False) returns Buf {
             my $buffer = get-out-buffer(8192);
-            my $bytes-out = lame_encode_flush(self, $buffer, 8192);
+            my $bytes-out = $nogap ?? lame_encode_flush_nogap(self, $buffer, 8192) !! lame_encode_flush(self, $buffer, 8192);
 
             if $bytes-out < 0 {
                 X::EncodeError.new(error => EncodeError($bytes-out)).throw;
@@ -181,8 +195,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        # nogap allows you to continue using the same encoder - useful for streaming
-        sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         sub lame_set_in_samplerate(GlobalFlags, int32) returns int32 is native("libmp3lame") { * }
         sub lame_get_in_samplerate(GlobalFlags) returns int32 is native("libmp3lame") { * }
@@ -443,24 +455,55 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         }
     }
 
+
+    # for some reason there aren't interleaved versions of all the
+    # different encode variants
+    sub uninterleave(@frames) {
+        my ( $left, $right);
+        ($++ %% 2 ?? $left !! $right).push: $_ for @frames;
+        return $left, $right;
+    }
+
     multi method encode-short(@left, @right) returns Buf {
         $!gfp.encode-short(@left, @right);
+    }
+
+    multi method encode-short(@frames) returns Buf {
+        $!gfp.encode-short(@frames);
     }
 
     multi method encode-int(@left, @right) returns Buf {
         $!gfp.encode-int(@left, @right);
     }
 
+    multi method encode-int(@frames) returns Buf {
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-int($left, $right);
+    }
+
     multi method encode-long(@left, @right) returns Buf {
         $!gfp.encode-long(@left, @right);
+    }
+
+    multi method encode-long(@frames) returns Buf {
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-long($left, $right);
     }
 
     multi method encode-float(@left, @right) returns Buf {
         $!gfp.encode-float(@left, @right);
     }
 
+    multi method encode-float(@frames) returns Buf {
+        $!gfp.encode-float(@frames);
+    }
+
     multi method encode-double(@left, @right) returns Buf {
         $!gfp.encode-double(@left, @right);
+    }
+
+    multi method encode-double(@frames) returns Buf {
+        $!gfp.encode-double(@frames);
     }
 
     method encode-flush() returns Buf {
