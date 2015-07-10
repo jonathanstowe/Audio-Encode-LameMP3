@@ -36,6 +36,12 @@ for @params -> $param {
 
 }
 
+lives-ok { $obj = Audio::Encode::LameMP3.new(in-samplerate => 22050, bitrate => 192, quality => 5) }, "new with parameters in constructor";
+
+is( $obj.in-samplerate, 22050, "correct samplerate");
+is( $obj.bitrate, 192, "correct bitrate");
+is( $obj.quality, 5, "correct quality");
+
 
 done;
 
