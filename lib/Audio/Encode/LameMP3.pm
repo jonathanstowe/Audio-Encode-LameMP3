@@ -48,8 +48,15 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         sub lame_init() returns GlobalFlags is native('libmp3lame') { * }
 
-        method new() {
-            lame_init();
+        method new(GlobalFlags:U: *%params) {
+            my $lgf = lame_init();
+
+            for %params.kv -> $param, $value {
+                if $lgf.can($param) {
+                    $lgf."$param"() = $value;
+                }
+            }
+            $lgf;
         }
 
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
@@ -517,8 +524,8 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         Version.new($v);
     }
 
-    submethod BUILD() {
-        $!gfp = GlobalFlags.new;
+    submethod BUILD(*%params) {
+        $!gfp = GlobalFlags.new(|%params);
     }
 }
 
