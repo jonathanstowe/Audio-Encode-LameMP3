@@ -1,2 +1,79 @@
 # Audio-Encode-LameMP3
 Encode PCM Audio data to MP3 in Perl 6 using a binding to liblame
+
+## Description
+
+This module provides a simple bind to "lame" an MP3 encoding library.
+
+http://lame.sourceforge.net/
+
+With this you can encode PCM data to MP3 at any bitrate or quality
+supported by the lame library.
+
+The interface is somewhat simplified in comparison to that of lame
+and some of the esoteric or rarely used features may not be supported.
+
+
+## Installation
+
+You will need to have "lame"  installed on your system in order to be
+able to use this. Most Linux distributions offer it as a package, but
+because there are certain patent issues surrounding the MP3 codec some
+distributions may either have it in an optional repository or not have
+it at all.
+
+If you are on some platform that doesn't provide lame as a package then
+you may be able to install it from source:
+
+http://lame.sourceforge.net/
+
+I am however unlikely to be able to offer help with installing it this
+way, also bear in mind that if you install a newer version than I have
+to test with then this may not work.
+
+Assuming you have a working perl6 installation you should be able to
+install this with *ufo* :
+
+    ufo
+    make test
+    make install
+
+*ufo* can be installed with *panda* for rakudo:
+
+    panda install ufo
+
+Or you can install directly with "panda":
+
+    # From the source directory
+   
+    panda install .
+
+    # Remote installation
+
+    panda install Audio::Encode-LameMP3
+
+Other install mechanisms may be become available in the future.
+
+## Support
+
+This should be considered experimental software until such time that
+Perl 6 reaches an official release.  However suggestions/patches are
+welcomed via github at
+
+https://github.com/jonathanstowe/Audio-Encode-LameMP3
+
+I have tested this and found it to work with my installation of icecast,
+so it should work anywhere else, if however you experience a problem
+with streaming please test with another source client such as ices or
+darkice before reporting a bug as I am unlikely to be able to help you
+with your streaming configuration.
+
+## Licence
+
+This library only binds to a "lame" installation you may have on your system, any
+licensing issues regarding the MP3 codec relate to the implementation of the codec
+and I cannot answer questions related to the licensing of that library.
+
+Please see the LICENCE file in the distribution regarding the licence for this library module.
+
+(C) Jonathan Stowe 2015
