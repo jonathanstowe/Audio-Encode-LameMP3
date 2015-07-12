@@ -51,12 +51,23 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         method new(GlobalFlags:U: *%params) {
             my $lgf = lame_init();
 
+            # call this here so we can add tags from the params.
+            $lgf.id3tag_init();
+
             for %params.kv -> $param, $value {
                 if $lgf.can($param) {
                     $lgf."$param"() = $value;
                 }
             }
             $lgf;
+        }
+
+        # If we want to add id3 tags in the stream we need to set this before we
+        # start adding them so call it in the constructor
+        sub id3tag_init(GlobalFlags) is native('libmp3lame') { * }
+        
+        method id3tag_init() {
+            id3tag_init(self);
         }
 
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
