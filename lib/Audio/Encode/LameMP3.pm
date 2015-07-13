@@ -68,6 +68,14 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         
         method id3tag_init() {
             id3tag_init(self);
+            # everyone wants v2 tags right?
+            self.id3-tag-add-v2();
+        }
+
+        sub id3tag_add_v2(GlobalFlags) is native('libmp3lame') { * }
+
+        method id3-tag-add-v2() {
+            id3tag_add_v2(self);
         }
 
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
