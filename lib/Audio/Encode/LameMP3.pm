@@ -506,6 +506,11 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
                                     write-vbr-tag
                                     decode-only
                                     nogap-total
+                                    title
+                                    artist
+                                    album
+                                    year
+                                    comment
                                   >;
 
     has Bool $!initialised = False;
@@ -581,6 +586,8 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     submethod BUILD(*%params) {
         $!gfp = GlobalFlags.new(|%params);
+        # No file descriptor so this must be off;
+        $!gfp.write-vbr-tag = False;
     }
 }
 
