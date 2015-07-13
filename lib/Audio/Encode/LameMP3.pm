@@ -532,48 +532,59 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     }
 
     multi method encode-short(@left, @right) returns Buf {
+        self.init();
         $!gfp.encode-short(@left, @right);
     }
 
     multi method encode-short(@frames) returns Buf {
+        self.init();
         $!gfp.encode-short(@frames);
     }
 
     multi method encode-int(@left, @right) returns Buf {
+        self.init();
         $!gfp.encode-int(@left, @right);
     }
 
     multi method encode-int(@frames) returns Buf {
+        self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-int($left, $right);
     }
 
     multi method encode-long(@left, @right) returns Buf {
+        self.init();
         $!gfp.encode-long(@left, @right);
     }
 
     multi method encode-long(@frames) returns Buf {
+        self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-long($left, $right);
     }
 
     multi method encode-float(@left, @right) returns Buf {
+        self.init();
         $!gfp.encode-float(@left, @right);
     }
 
     multi method encode-float(@frames) returns Buf {
+        self.init();
         $!gfp.encode-float(@frames);
     }
 
     multi method encode-double(@left, @right) returns Buf {
+        self.init();
         $!gfp.encode-double(@left, @right);
     }
 
     multi method encode-double(@frames) returns Buf {
+        self.init();
         $!gfp.encode-double(@frames);
     }
 
     method encode-flush() returns Buf {
+        self.init();
         $!gfp.encode-flush();
     }
 

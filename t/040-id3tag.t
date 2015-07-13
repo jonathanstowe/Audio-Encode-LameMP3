@@ -20,7 +20,6 @@ lives-ok { $encoder.artist = "Test Artist" }, "set artist";
 lives-ok { $encoder.album = "Test Album" }, "set album";
 lives-ok { $encoder.year = "2015" }, "set year";
 lives-ok { $encoder.comment = "Test Comment" }, "set a comment";
-lives-ok { $encoder.init }, "init";
 
 my $buf;
 
