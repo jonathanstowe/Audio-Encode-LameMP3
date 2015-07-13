@@ -78,6 +78,42 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             id3tag_add_v2(self);
         }
 
+        # The functions to set id3 tags have no get equivalents
+        # neither do they return anything to indicate they worked.
+
+        # Just use accessor facade with no return
+        sub empty-get(GlobalFlags $) { Str }
+        sub manage(GlobalFlags $self, Str $value is copy ) {
+            explicitly-manage($value);
+            $value;
+        }
+
+        role ID3Tag { }
+
+        multi sub trait_mod:<is>(Method $m, :$id3tag! ) {
+            $m does ID3Tag;
+        }
+
+        sub id3tag_set_title(GlobalFlags, Str) is native('libmp3lame') { * }
+
+        method title() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_title, &manage) is id3tag { * }
+
+        sub id3tag_set_artist(GlobalFlags, Str) is native('libmp3lame') { * }
+
+        method artist() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_artist, &manage) is id3tag { }
+
+        sub id3tag_set_album(GlobalFlags, Str) is native('libmp3lame') { * }
+
+        method album() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_album, &manage) is id3tag { }
+
+        sub id3tag_set_year(GlobalFlags, Str) is native('libmp3lame') { * }
+
+        method year() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_year, &manage) is id3tag { }
+
+        sub id3tag_set_comment(GlobalFlags, Str) is native('libmp3lame') { * }
+
+        method comment() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_comment, &manage) is id3tag { }
+
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
 
         }
