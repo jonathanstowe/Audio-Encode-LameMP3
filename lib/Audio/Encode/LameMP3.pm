@@ -4,6 +4,9 @@ use AccessorFacade;
 
 class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
+    # Output of ':raw' methods for notational convenience
+    subset RawEncode of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray[uint8]) && ($_[1] ~~ Int);
+
     enum EncodeError ( Okay => 0, BuffTooSmall => -1, Malloc => -2, NotInit => -3, Psycho => -4 );
 
     class X::LameError is Exception {
@@ -141,7 +144,12 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             $buf;
         }
 
-        method encode-two(@left, @right, &encode-func, Mu $type ) returns Buf {
+        multi method encode-two(@left, @right, &encode-func, Mu $type ) returns Buf {
+            my ($buffer, $bytes-out) = self.encode-two(@left, @right, &encode-func, $type, :raw ).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+
+        multi method encode-two(@left, @right, &encode-func, Mu $type, :$raw!) returns RawEncode {
             if (@left.elems == @right.elems ) {
 
                 my $left-in   = copy-to-carray(@left, $type);
@@ -155,14 +163,19 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
                 if $bytes-out < 0 {
                     X::EncodeError.new(error => EncodeError($bytes-out)).throw;
                 }
-                copy-carray-to-buf($buffer, $bytes-out);
+                [$buffer, $bytes-out];
             }
             else {
                 X::EncodeError.new(message => "not equal length frames in");
             }
         }
 
-        method encode-interleaved(@frames, &encode-func, Mu $type ) returns Buf {
+        multi method encode-interleaved(@frames, &encode-func, Mu $type ) returns Buf {
+            my ( $buffer, $bytes-out ) = self.encode-interleaved(@frames, &encode-func, $type, :raw ).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+
+        multi method encode-interleaved(@frames, &encode-func, Mu $type, :$raw! ) returns RawEncode {
             if (@frames.elems % 2 ) == 0  {
 
                 my $frames-in   = copy-to-carray(@frames, $type);
@@ -175,7 +188,7 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
                 if $bytes-out < 0 {
                     X::EncodeError.new(error => EncodeError($bytes-out)).throw;
                 }
-                copy-carray-to-buf($buffer, $bytes-out);
+                [ $buffer, $bytes-out ];
             }
             else {
                 X::EncodeError.new(message => "not equal length frames in");
@@ -194,7 +207,7 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
-        multi method encode-short(@frames ) returns Buf {
+        multi method encode-short(@frames) returns Buf {
             self.encode-interleaved(@frames, &lame_encode_buffer_interleaved, int16);
         }
 
