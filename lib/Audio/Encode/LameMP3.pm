@@ -144,12 +144,12 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             $buf;
         }
 
-        multi method encode-two(@left, @right, &encode-func, Mu $type ) returns Buf {
-            my ($buffer, $bytes-out) = self.encode-two(@left, @right, &encode-func, $type, :raw ).list;
+        multi method encode(@left, @right, &encode-func, Mu $type ) returns Buf {
+            my ($buffer, $bytes-out) = self.encode(@left, @right, &encode-func, $type, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode-two(@left, @right, &encode-func, Mu $type, :$raw!) returns RawEncode {
+        multi method encode(@left, @right, &encode-func, Mu $type, :$raw!) returns RawEncode {
             if (@left.elems == @right.elems ) {
 
                 my $left-in   = copy-to-carray(@left, $type);
@@ -170,12 +170,12 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             }
         }
 
-        multi method encode-interleaved(@frames, &encode-func, Mu $type ) returns Buf {
-            my ( $buffer, $bytes-out ) = self.encode-interleaved(@frames, &encode-func, $type, :raw ).list;
+        multi method encode(@frames, &encode-func, Mu $type ) returns Buf {
+            my ( $buffer, $bytes-out ) = self.encode(@frames, &encode-func, $type, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode-interleaved(@frames, &encode-func, Mu $type, :$raw! ) returns RawEncode {
+        multi method encode(@frames, &encode-func, Mu $type, :$raw! ) returns RawEncode {
             if (@frames.elems % 2 ) == 0  {
 
                 my $frames-in   = copy-to-carray(@frames, $type);
@@ -202,13 +202,13 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-short(@left, @right) returns Buf {
-            self.encode-two(@left, @right, &lame_encode_buffer, int16);
+            self.encode(@left, @right, &lame_encode_buffer, int16);
         }
 
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-short(@frames) returns Buf {
-            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved, int16);
+            self.encode(@frames, &lame_encode_buffer_interleaved, int16);
         }
 
         # not sure what this one is about. The include file comment suggests it is ints but the signature suggests otherwise
@@ -218,25 +218,25 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_encode_buffer_ieee_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-float(@left, @right) returns Buf {
-            self.encode-two(@left, @right, &lame_encode_buffer_ieee_float, num32);
+            self.encode(@left, @right, &lame_encode_buffer_ieee_float, num32);
         }
 
         sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-float(@frames ) returns Buf {
-            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved_ieee_float, num32);
+            self.encode(@frames, &lame_encode_buffer_interleaved_ieee_float, num32);
         }
 
         sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-double(@left, @right) returns Buf {
-            self.encode-two(@left, @right, &lame_encode_buffer_ieee_float, num64);
+            self.encode(@left, @right, &lame_encode_buffer_ieee_float, num64);
         }
 
         sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-double(@frames ) returns Buf {
-            self.encode-interleaved(@frames, &lame_encode_buffer_interleaved_ieee_double, num64);
+            self.encode(@frames, &lame_encode_buffer_interleaved_ieee_double, num64);
         }
 
         # ignoring the long variant as it appears to be a mistake
@@ -244,14 +244,14 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_encode_buffer_long2(GlobalFlags, CArray[int64], CArray[int64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-long(@left, @right) returns Buf {
-            self.encode-two(@left, @right, &lame_encode_buffer_long2, int64);
+            self.encode(@left, @right, &lame_encode_buffer_long2, int64);
         }
 
         # the include suggests that the scaling may be wonky on this.
         sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-int(@left, @right) returns Buf {
-            self.encode-two(@left, @right, &lame_encode_buffer_int, int32);
+            self.encode(@left, @right, &lame_encode_buffer_int, int32);
         }
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
@@ -260,13 +260,19 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         # allocate an overly long buffer to take the last bit
-        method encode-flush(Bool :$nogap = False) returns Buf {
+        multi method encode-flush(Bool :$nogap = False) returns Buf {
+            my ( $buffer, $bytes-out) = self.encode-flush(:$nogap, :raw).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+
+        multi method encode-flush(Bool :$nogap = False, :$raw!) returns RawEncode {
             my $buffer = get-out-buffer(8192);
             my $bytes-out = $nogap ?? lame_encode_flush_nogap(self, $buffer, 8192) !! lame_encode_flush(self, $buffer, 8192);
 
             if $bytes-out < 0 {
                 X::EncodeError.new(error => EncodeError($bytes-out)).throw;
             }
+            [$buffer, $bytes-out];
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
