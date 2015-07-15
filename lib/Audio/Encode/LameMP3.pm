@@ -652,10 +652,28 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     # for some reason there aren't interleaved versions of all the
     # different encode variants
-    sub uninterleave(@frames) {
+    multi sub uninterleave(@frames) {
         my ( $left, $right);
         ($++ %% 2 ?? $left !! $right).push: $_ for @frames;
         return $left, $right;
+    }
+
+    multi sub uninterleave(CArray $c, $frames) {
+	    my $left = $c.WHAT.new;
+	    my $right = $c.WHAT.new;
+
+	    my $left-index = 0;
+	    my $right-index = 0;
+
+	    for ^(2 * $frames) -> $i {
+		    if $i % 2 {
+			    $right[$right-index++] = $c[$i];
+		    }
+		    else {
+			    $left[$left-index++] = $c[$i];
+		    }
+	    }
+	    return $left, $right;
     }
 
     multi method encode-short(@left, @right) returns Buf {
@@ -675,6 +693,25 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     multi method encode-short(@frames, :$raw!) returns RawEncode {
         self.init();
         $!gfp.encode-short(@frames, :raw);
+    }
+
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-short($left, $right, $frames);
+    }
+
+    multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-short($frames-in, $frames);
+    }
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-short($left, $right, $frames, :raw);
+    }
+
+    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-short($frames-in, $frames, :raw);
     }
 
     multi method encode-int(@left, @right) returns Buf {
@@ -699,26 +736,48 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         $!gfp.encode-int($left, $right, :raw);
     }
 
-    multi method encode-long(@left, @right) returns Buf {
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf {
         self.init();
-        $!gfp.encode-long(@left, @right);
+        $!gfp.encode-int($left, $right, $frames);
     }
 
-    multi method encode-long(@frames) returns Buf {
+    multi method encode-int(CArray[int32] $frames-in, Int $frames) returns Buf {
         self.init();
-        my ( $left, $right ) = uninterleave(@frames);
-        $!gfp.encode-long($left, $right);
+        my ( $left, $right ) = uninterleave($frames-in, $frames);
+        $!gfp.encode-int($left, $right, $frames);
     }
 
-    multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode {
         self.init();
-        $!gfp.encode-long(@left, @right, :raw);
+        $!gfp.encode-int($left, $right, $frames, :raw);
     }
 
-    multi method encode-long(@frames, :$raw!) returns RawEncode {
+    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw!) returns RawEncode {
         self.init();
-        my ( $left, $right ) = uninterleave(@frames);
-        $!gfp.encode-long($left, $right, :raw);
+        my ( $left, $right ) = uninterleave($frames-in, $frames);
+        $!gfp.encode-int($left, $right, $frames, :raw);
+    }
+
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-long($left, $right, $frames);
+    }
+
+    multi method encode-long(CArray[int64] $frames-in, Int $frames) returns Buf {
+        self.init();
+        my ( $left, $right ) = uninterleave($frames-in, $frames);
+        $!gfp.encode-long($left, $right, $frames);
+    }
+
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-long($left, $right, $frames, :raw);
+    }
+
+    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        my ( $left, $right ) = uninterleave($frames-in, $frames);
+        $!gfp.encode-long($left, $right, $frames, :raw);
     }
 
     multi method encode-float(@left, @right) returns Buf {
@@ -741,6 +800,26 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         $!gfp.encode-float(@frames, :raw);
     }
 
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-float($left, $right, $frames);
+    }
+
+    multi method encode-float(CArray[num32] $frames-in, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-float($frames-in, $frames);
+    }
+
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-float($left, $right, $frames, :raw);
+    }
+
+    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-float($frames-in, $frames, :raw);
+    }
+
     multi method encode-double(@left, @right) returns Buf {
         self.init();
         $!gfp.encode-double(@left, @right);
@@ -759,6 +838,26 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     multi method encode-double(@frames, :$raw!) returns RawEncode {
         self.init();
         $!gfp.encode-double(@frames, :raw);
+    }
+
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-double($left, $right, $frames);
+    }
+
+    multi method encode-double(CArray[num64] $frames-in, Int $frames) returns Buf {
+        self.init();
+        $!gfp.encode-double($frames-in, $frames);
+    }
+
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-double($left, $right, $frames, :raw);
+    }
+
+    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-double($frames-in, $frames, :raw);
     }
 
     multi method encode-flush() returns Buf {
