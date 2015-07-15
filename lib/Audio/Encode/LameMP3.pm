@@ -221,10 +221,18 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             self.encode(@left, @right, &lame_encode_buffer, int16);
         }
 
+        multi method encode-short(@left, @right, :$raw!) returns RawEncode {
+            self.encode(@left, @right, &lame_encode_buffer, int16, :raw);
+        }
+
         sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-short(@frames) returns Buf {
             self.encode(@frames, &lame_encode_buffer_interleaved, int16);
+        }
+
+        multi method encode-short(@frames, :$raw!) returns RawEncode {
+            self.encode(@frames, &lame_encode_buffer_interleaved, int16, :raw);
         }
 
         # not sure what this one is about. The include file comment suggests it is ints but the signature suggests otherwise
@@ -236,11 +244,18 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         multi method encode-float(@left, @right) returns Buf {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num32);
         }
+        multi method encode-float(@left, @right, :$raw!) returns RawEncode {
+            self.encode(@left, @right, &lame_encode_buffer_ieee_float, num32, :raw);
+        }
 
         sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-float(@frames ) returns Buf {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_float, num32);
+        }
+
+        multi method encode-float(@frames, :$raw! ) returns RawEncode {
+            self.encode(@frames, &lame_encode_buffer_interleaved_ieee_float, num32, :raw);
         }
 
         sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
@@ -249,10 +264,17 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num64);
         }
 
+        multi method encode-double(@left, @right, :$raw!) returns RawEncode {
+            self.encode(@left, @right, &lame_encode_buffer_ieee_float, num64, :raw);
+        }
+
         sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-double(@frames ) returns Buf {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_double, num64);
+        }
+        multi method encode-double(@frames, :$raw! ) returns RawEncode {
+            self.encode(@frames, &lame_encode_buffer_interleaved_ieee_double, num64, :raw);
         }
 
         # ignoring the long variant as it appears to be a mistake
@@ -263,11 +285,18 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             self.encode(@left, @right, &lame_encode_buffer_long2, int64);
         }
 
+        multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+            self.encode(@left, @right, &lame_encode_buffer_long2, int64, :raw);
+        }
+
         # the include suggests that the scaling may be wonky on this.
         sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         multi method encode-int(@left, @right) returns Buf {
             self.encode(@left, @right, &lame_encode_buffer_int, int32);
+        }
+        multi method encode-int(@left, @right, :$raw!) returns RawEncode {
+            self.encode(@left, @right, &lame_encode_buffer_int, int32, :raw);
         }
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
