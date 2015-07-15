@@ -149,29 +149,41 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
+        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func ) returns Buf {
+            my ($buffer, $bytes-out) = self.encode($left-in, $right-in, $frames, &encode-func, :raw ).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+
         multi method encode(@left, @right, &encode-func, Mu $type, :$raw!) returns RawEncode {
             if (@left.elems == @right.elems ) {
 
                 my $left-in   = copy-to-carray(@left, $type);
                 my $right-in  = copy-to-carray(@right, $type);
                 my $frames    = @left.elems;
-                my $buff-size = get-buffer-size($frames);
-                my $buffer    = get-out-buffer($buff-size);
-
-                my $bytes-out = &encode-func(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
-
-                if $bytes-out < 0 {
-                    X::EncodeError.new(error => EncodeError($bytes-out)).throw;
-                }
-                [$buffer, $bytes-out];
+                self.encode($left-in, $right-in, $frames, &encode-func, :raw);
             }
             else {
                 X::EncodeError.new(message => "not equal length frames in");
             }
         }
 
+        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func, :$raw!)  returns RawEncode {
+            my $buff-size = get-buffer-size($frames);
+            my $buffer    = get-out-buffer($buff-size);
+            my $bytes-out = &encode-func(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
+            if $bytes-out < 0 {
+                X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+            }
+            [$buffer, $bytes-out];
+        }
+
         multi method encode(@frames, &encode-func, Mu $type ) returns Buf {
             my ( $buffer, $bytes-out ) = self.encode(@frames, &encode-func, $type, :raw ).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+
+        multi method encode(CArray $frames-in, Int $frames, &encode-func ) returns Buf {
+            my ( $buffer, $bytes-out ) = self.encode($frames-in, $frames, &encode-func, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
@@ -180,19 +192,23 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
                 my $frames-in   = copy-to-carray(@frames, $type);
                 my $frames    = (@frames.elems / 2).Int;
-                my $buff-size = get-buffer-size($frames);
-                my $buffer    = get-out-buffer($buff-size);
-
-                my $bytes-out = &encode-func(self, $frames-in, $frames, $buffer, $buff-size);
-
-                if $bytes-out < 0 {
-                    X::EncodeError.new(error => EncodeError($bytes-out)).throw;
-                }
-                [ $buffer, $bytes-out ];
+                self.encode($frames-in, $frames, &encode-func, :raw);
             }
             else {
                 X::EncodeError.new(message => "not equal length frames in");
             }
+        }
+
+        multi method encode(CArray $frames-in, Int $frames, &encode-func, :$raw!) returns RawEncode {
+            my $buff-size = get-buffer-size($frames);
+            my $buffer    = get-out-buffer($buff-size);
+
+            my $bytes-out = &encode-func(self, $frames-in, $frames, $buffer, $buff-size);
+
+            if $bytes-out < 0 {
+                X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+            }
+            [ $buffer, $bytes-out ];
         }
 
         # encode functions all return the number of bytes in the encoded output or a value less than 0
@@ -260,20 +276,31 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('libmp3lame') { * }
 
         # allocate an overly long buffer to take the last bit
-        multi method encode-flush(Bool :$nogap = False) returns Buf {
-            my ( $buffer, $bytes-out) = self.encode-flush(:$nogap, :raw).list;
+        multi method encode-flush(:$nogap!) returns Buf {
+            my ( $buffer, $bytes-out) = self.encode-flush(:nogap, :raw).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
-
-        multi method encode-flush(Bool :$nogap = False, :$raw!) returns RawEncode {
+        multi method encode-flush() returns Buf {
+            my ( $buffer, $bytes-out) = self.encode-flush(:raw).list;
+            copy-carray-to-buf($buffer, $bytes-out);
+        }
+        multi method encode-flush(:$nogap! , :$raw!) returns RawEncode {
             my $buffer = get-out-buffer(8192);
-            my $bytes-out = $nogap ?? lame_encode_flush_nogap(self, $buffer, 8192) !! lame_encode_flush(self, $buffer, 8192);
+            my $bytes-out = lame_encode_flush_nogap(self, $buffer, 8192);
 
             if $bytes-out < 0 {
                 X::EncodeError.new(error => EncodeError($bytes-out)).throw;
             }
             [$buffer, $bytes-out];
-            copy-carray-to-buf($buffer, $bytes-out);
+        }
+        multi method encode-flush(:$raw!) returns RawEncode {
+            my $buffer = get-out-buffer(8192);
+            my $bytes-out = lame_encode_flush(self, $buffer, 8192);
+
+            if $bytes-out < 0 {
+                X::EncodeError.new(error => EncodeError($bytes-out)).throw;
+            }
+            [$buffer, $bytes-out];
         }
 
 
