@@ -667,6 +667,15 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         self.init();
         $!gfp.encode-short(@frames);
     }
+    multi method encode-short(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-short(@left, @right, :raw);
+    }
+
+    multi method encode-short(@frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-short(@frames, :raw);
+    }
 
     multi method encode-int(@left, @right) returns Buf {
         self.init();
@@ -677,6 +686,17 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-int($left, $right);
+    }
+
+    multi method encode-int(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-int(@left, @right, :raw);
+    }
+
+    multi method encode-int(@frames, :$raw!) returns RawEncode {
+        self.init();
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-int($left, $right, :raw);
     }
 
     multi method encode-long(@left, @right) returns Buf {
@@ -690,6 +710,17 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         $!gfp.encode-long($left, $right);
     }
 
+    multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-long(@left, @right, :raw);
+    }
+
+    multi method encode-long(@frames, :$raw!) returns RawEncode {
+        self.init();
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-long($left, $right, :raw);
+    }
+
     multi method encode-float(@left, @right) returns Buf {
         self.init();
         $!gfp.encode-float(@left, @right);
@@ -698,6 +729,16 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     multi method encode-float(@frames) returns Buf {
         self.init();
         $!gfp.encode-float(@frames);
+    }
+
+    multi method encode-float(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-float(@left, @right, :raw);
+    }
+
+    multi method encode-float(@frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-float(@frames, :raw);
     }
 
     multi method encode-double(@left, @right) returns Buf {
@@ -710,9 +751,31 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         $!gfp.encode-double(@frames);
     }
 
-    method encode-flush() returns Buf {
+    multi method encode-double(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-double(@left, @right, :raw);
+    }
+
+    multi method encode-double(@frames, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-double(@frames, :raw);
+    }
+
+    multi method encode-flush() returns Buf {
         self.init();
         $!gfp.encode-flush();
+    }
+    multi method encode-flush(:$nogap!) returns Buf {
+        self.init();
+        $!gfp.encode-flush(:nogap);
+    }
+    multi method encode-flush(:$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-flush(:raw);
+    }
+    multi method encode-flush(:$nogap!, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-flush(:nogap, :raw);
     }
 
     sub get_lame_version() returns Str is native('libmp3lame') { * }
