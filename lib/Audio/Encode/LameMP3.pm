@@ -758,6 +758,28 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         $!gfp.encode-int($left, $right, $frames, :raw);
     }
 
+    multi method encode-long(@left, @right) returns Buf {
+        self.init();
+        $!gfp.encode-long(@left, @right);
+    }
+
+    multi method encode-long(@frames) returns Buf {
+        self.init();
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-long($left, $right);
+    }
+
+    multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+        self.init();
+        $!gfp.encode-long(@left, @right, :raw);
+    }
+
+    multi method encode-long(@frames, :$raw!) returns RawEncode {
+        self.init();
+        my ( $left, $right ) = uninterleave(@frames);
+        $!gfp.encode-long($left, $right, :raw);
+    }
+
     multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf {
         self.init();
         $!gfp.encode-long($left, $right, $frames);
