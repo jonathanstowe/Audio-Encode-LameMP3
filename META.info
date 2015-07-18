@@ -10,6 +10,7 @@
   "source-url" : "git://github.com/jonathanstowe/Audio-Encode-LameMP3.git",
   "perl" : "v6",
   "build-depends" : [
+    "LibraryCheck",
     "AccessorFacade"
   ],
   "provides" : {
