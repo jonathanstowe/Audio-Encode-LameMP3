@@ -2,6 +2,305 @@ use v6;
 use NativeCall;
 use AccessorFacade;
 
+=begin pod
+
+=head1 NAME
+
+Audio::Encode::LameMP3 - encode PCM data to MP3 using libmp3lame
+
+=head1 SYNOPSIS
+
+=begin code
+
+    use Audio::Encode::LameMP3;
+    use Audio::Sndfile;
+
+    my $test-file = 't/data/cw_glitch_noise15.wav';
+
+    my $sndfile = Audio::Sndfile.new(filename => $test-file, :r);
+    my $encoder = Audio::Encode::LameMP3.new(bitrate => 128, quality => 3, in-samplerate => $sndfile.samplerate);
+
+    my $out-file = 'encoded.mp3'.IO.open(:w, :bin);
+
+    loop {
+        my @in-frames = $sndfile.read-short(4192);
+        my $buf = $encoder.encode-short(@in-frames);
+        $out-file.write($buf);
+        last if ( @in-frames / $sndfile.channels ) != 4192;
+    }
+
+    $sndfile.close();
+    my  $buf = $encoder.encode-flush();
+    $out-file.write($buf);
+    $out-file.close;
+
+=end code
+
+See also the C<examples/> directory in the distribution.
+
+=head1 DESCRIPTION
+
+This module provides a simple binding to "libmp3lame" an MP3 encoding library.
+
+With this you can encode PCM data to MP3 at any bitrate or quality
+supported by the lame library.
+
+The interface is somewhat simplified in comparison to that of lame
+and some of the esoteric or rarely used features may not be supported.
+
+Because marshalling large arrays and buffers between perl space and the
+native world may be too slow for some use cases the interface provides
+for passing and returning native CArrays (and their sizes) for the use
+of other native bindings (e.g. L<Audio::Sndfile>, L<Audio::Libshout>) where 
+speed may prove important, which , for me at least, is quite a common
+use-case.  The C<p6lame_encode> example demonstrates this way of using
+the interface.
+
+=head2 METHODS
+
+All of the encode methods below have multi variants that accept appropriately
+shaped CArray arguments (along with the number of frames.)  With the C<:raw>
+adverb they will return a C<RawEncode> sub-set which is defined as an Array
+of two elements the first being a C<CArray[uint8]> containing the encoded
+data and an C<Int> indicating how many items there are.  This is for ease of
+interoperating with modules such as L<Audio::Sndfile> and L<Audio::Libshout>
+and avoids the cost of marshalling to/from perl Arrays where it is not needed.
+
+=head3 method new
+
+    method new(*%attributes) returns Audio::Encode::LameMP3
+
+The constructor of objects of this type, this can be passed any of the
+encoder parameters or id3 tags described below.  It will set some internal
+defaults.
+
+=head3 method init
+
+    method init() 
+
+This initialises the encoder ready to start the encoding.  It may be called after
+all the rquired parameters have been set, however it will be called for you when
+the first encode method is called.  It is an error to attempt to set any encoding
+parameters after C<init> has been called.
+
+=head3 method init-bitstream
+
+    method init-bitstream() 
+
+This can be used to re-initialise the encoder's internal state in order that it
+can be re-used for the encoding of a new source (e.g. a new file.)  It should only
+be called after C<encode-flush> has been called and the result of doing otherwise
+is undefined.  Typically this could be used when streaming multiple files in sequence
+to the the same stream endpoint for example, calling C<encode-flush> and C<init-bitstream>
+between each file.
+
+This is not necessary on the first initialisation as it is called by C<init()>
+
+=head3 method lame-version
+
+    method lame-version() returns Version 
+
+This returns a L<Version> object indicating the version of C<libmp3lame> that is
+being used.  
+
+=head3 method encode-short
+
+    multi method encode-short(@left, @right) returns Buf 
+    multi method encode-short(@frames) returns Buf 
+    multi method encode-short(@left, @right, :$raw!) returns RawEncode 
+    multi method encode-short(@frames, :$raw!) returns RawEncode 
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf 
+    multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf 
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode 
+
+=head3 method encode-int
+
+    multi method encode-int(@left, @right) returns Buf 
+    multi method encode-int(@frames) returns Buf 
+    multi method encode-int(@left, @right, :$raw!) returns RawEncode 
+    multi method encode-int(@frames, :$raw!) returns RawEncode 
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf 
+    multi method encode-int(CArray[int32] $frames-in, Int $frames) returns Buf 
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw!) returns RawEncode 
+
+=head3 method encode-long
+
+    multi method encode-long(@left, @right) returns Buf 
+    multi method encode-long(@frames) returns Buf 
+    multi method encode-long(@left, @right, :$raw!) returns RawEncode 
+    multi method encode-long(@frames, :$raw!) returns RawEncode 
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf 
+    multi method encode-long(CArray[int64] $frames-in, Int $frames) returns Buf 
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode 
+
+=head3 method encode-float 
+
+    multi method encode-float(@left, @right) returns Buf 
+    multi method encode-float(@frames) returns Buf 
+    multi method encode-float(@left, @right, :$raw!) returns RawEncode 
+    multi method encode-float(@frames, :$raw!) returns RawEncode 
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf 
+    multi method encode-float(CArray[num32] $frames-in, Int $frames) returns Buf 
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw!) returns RawEncode 
+
+=head3 method encode-double
+
+    multi method encode-double(@left, @right) returns Buf 
+    multi method encode-double(@frames) returns Buf 
+    multi method encode-double(@left, @right, :$raw!) returns RawEncode 
+    multi method encode-double(@frames, :$raw!) returns RawEncode 
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf 
+    multi method encode-double(CArray[num64] $frames-in, Int $frames) returns Buf 
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode 
+
+=head3 method encode-flush
+
+    multi method encode-flush() returns Buf 
+    multi method encode-flush(:$nogap!) returns Buf 
+    multi method encode-flush(:$raw!) returns RawEncode 
+    multi method encode-flush(:$nogap!, :$raw!) returns RawEncode 
+
+=head2 CONFIGURATION ATTRIBUTES
+
+All of those can be supplied to the constructor or can be set as attributes
+on a constructed object before it is initialised.  Some are more useful
+than others as the library provides sensible defaults.  
+
+The lame library provides a wider range of settable parameters that are not
+exposed as I either don't understand them or they don't seem to be useful.
+
+If of course you need a particular parameter, please feel free to request
+it to be added - most of the native stubs are there, just not exposed as
+methods.
+
+The first four are the most likely to be used in most code.
+
+=head3 in-samplerate
+
+This should reflect the samplerate of the input PCM data. The default
+is 44100.  If this is not set correctly the speed of the playback of
+the encoded data will be incorrect.
+
+=head3 bitrate
+
+This is the playback bitrate of the encoded data. It should be a value
+understood by both lame and the target players,  values that are fairly
+universally understood are 64, 128, 192 and 320.
+
+=head3 quality
+
+This is an integer value between 0 and 9 that indicates the quality 
+(and hence the speed) of the encoding, where 0 is the best (and slowest)
+and 9 is the least good and fastest.  The default is 5.  Most applications
+will typically use a value between 3 and 7 but your ears and patience might
+better than mine.
+
+=head3 mode
+
+This is a value of the C<enum> L<Audio::Encode::LameMP3::MPEG-Mode> with the
+following items:
+
+=item Stereo 
+
+For lame this setting is probably un-necessary.  The stereo channels are
+encoded separately and this may result in greater loss of stereo field
+information than C<JointStereo>.
+
+=item JointStereo 
+
+This is the most common setting for most uses.  The stereo channel separation
+is essentially encoded losslessly in lame.
+
+=item DualChannel 
+
+This is not implemented as a separate mode by lame, setting this will have no
+effect.
+
+=item Mono 
+
+The input source is to be encoded as mono.  If interleaved data is presented
+then it will be read as if it represents a single channel.  If separate
+channels are presented only the left channel will be encoded,
+
+=item NotSet
+
+This is the default.  The library will infact encode as C<JointStereo> by default.
+
+=head3 num-samples
+
+If the number of samples that will be encoded is known in advance (for instance
+where the PCM data is read from a file.) this can be set.  The default is 2^31
+samples.  If it is set the encoder may be able to make certain small optimisations.
+
+=head3 num-channels
+
+This should be either 1 or 2. lame doesn't support a greater number of channels
+(e.g. surround modes) Setting this is probably completely un-necessary.
+
+=head3 scale
+
+This is a scaling factor between 0 and 1 that will be applied to the input data
+before encoding.  The default is 1.
+
+=head3 scale-left
+
+scaling between 0 and 1 for the left channel. The default is undefined as C<scale>
+will be used.
+
+=head3 scale-right
+
+scaling between 0 and 1 for the right channel. The default is undefined as C<scale>
+will be used.
+
+=head3 out-samplerate
+
+This is the target samplerate of the encoded output (i.e. the samplerate of the 
+resulting PCM if the output were decoded.) The default is the same as the input
+samplerate and it probably isn't necessary to change it unless some target software
+or hardware requires a particular samplerate. If you want finer control over the
+samplerate you may consider using another library such as 'libsamplerate'
+
+=head2 ID3 Attributes
+
+These will cause ID3 tags to be inserted into the output stream.  For some reason
+there are no getters for these in 'lame' so they all return an undefined L<Str>.
+
+These are quite limited, if you are saving to a file and want finer control
+over the tags you might want to consider L<Audio::Taglib::Simple> which will let
+you add more tags more flexibly.
+
+These can be either applied to the constructor as parameters or as
+attributes on an L<Audio::Encode::LameMP3> object before the encoder
+is initialised.  Additionally the may be set as attributes after
+C<encode-flush> has been called and before it is reinitialised.
+
+=head3 title
+
+The title tag.
+
+=head3 artist
+
+The artist.
+
+=head3 album
+
+The album.
+
+=head3 year
+
+The year (this is a string that should look like a year e.g. "2015" )
+
+=head3 comment
+
+A comment.
+
+=end pod
+
 class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     # Output of ':raw' methods for notational convenience
@@ -897,6 +1196,12 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
     multi method encode-flush(:$nogap!, :$raw!) returns RawEncode {
         self.init();
         $!gfp.encode-flush(:nogap, :raw);
+    }
+
+    method init-bitstream() {
+        if $!initialised {
+            $!gfp.init-bitstream();
+        }
     }
 
     sub get_lame_version() returns Str is native('libmp3lame') { * }
