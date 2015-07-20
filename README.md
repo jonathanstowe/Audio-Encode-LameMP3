@@ -13,6 +13,20 @@ supported by the lame library.
 The interface is somewhat simplified in comparison to that of lame
 and some of the esoteric or rarely used features may not be supported.
 
+Because marshalling large arrays and buffers between perl space and the
+native world may be too slow for some use cases the interface provides
+for passing and returning native CArrays (and their sizes) for the use
+of other native bindings (e.g. Audio::Sndfile, Audio::Libshout) where 
+speed may prove important, which , for me at least, is quite a common
+use-case.  The 'p6lame_encode' example demonstrates this way of using
+the interface.
+
+For interest the first thing I encoded was:
+
+https://soundcloud.com/rabidgravy/udy-ryu-rabid-gravy-revolutionary-suicide-mix
+
+which is a remix I made of a track by the lovely Aaron Udy.
+
 
 ## Installation
 
@@ -53,6 +67,9 @@ Or you can install directly with "panda":
     panda install Audio::Encode-LameMP3
 
 Other install mechanisms may be become available in the future.
+
+The tests take a little longer than I would like largely because there's
+quite a lot of file I/O involved.
 
 ## Support
 
