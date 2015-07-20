@@ -79,11 +79,12 @@ welcomed via github at
 
 https://github.com/jonathanstowe/Audio-Encode-LameMP3
 
-I have tested this and found it to work with my installation of icecast,
-so it should work anywhere else, if however you experience a problem
-with streaming please test with another source client such as ices or
-darkice before reporting a bug as I am unlikely to be able to help you
-with your streaming configuration.
+I have tested this and found it to work with my installation of libmp3lame
+so it should work anywhere else the library is installed, if however
+you experience a problem with the encoding, please test with the 'lame'
+binary that is installed with libmp3lame before reporting a bug. Obviously
+because the actual encoding is done by the native library, I'm not
+able to comment on the perceived quality or otherwise of the results.
 
 ## Licence
 
