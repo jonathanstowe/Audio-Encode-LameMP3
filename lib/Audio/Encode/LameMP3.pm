@@ -1,6 +1,4 @@
 use v6;
-use NativeCall;
-use AccessorFacade;
 
 =begin pod
 
@@ -395,6 +393,8 @@ A comment. The id3v2 tag is created with a language of "XXX" for some reason.
 =end pod
 
 class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
+    use NativeCall;
+    use AccessorFacade;
 
     # Output of ':raw' methods for notational convenience
     subset RawEncode of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray[uint8]) && ($_[1] ~~ Int);
