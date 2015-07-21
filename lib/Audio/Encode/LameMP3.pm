@@ -105,6 +105,23 @@ being used.
 
 =head3 method encode-short
 
+Encode the block of PCM data expressed as signed 16 bit integers to
+MP3 returning the data as unsigned 8 bit integers.  The input data
+can be provided either as separate channels or in interleaved form.
+The multi variants allow the data to provided as perl arrays or as
+C<CArray[int16]> and the number of frames ( the number of frames is the
+number left channel, right channel pairs.)
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
+
+Tests seem to demonstrate that this is the fastest of the encoding
+methods, which is convenient as 16 bit PCM is probably the most common
+format for general use (being that which is used on CDs.)
+
+
     multi method encode-short(@left, @right) returns Buf 
     multi method encode-short(@frames) returns Buf 
     multi method encode-short(@left, @right, :$raw!) returns RawEncode 
@@ -115,6 +132,26 @@ being used.
     multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode 
 
 =head3 method encode-int
+
+Encode the block of PCM data expressed as 32 bit integers to MP3 returning
+the data as unsigned 8 bit integers.  The input data can be provided
+either as separate channels or in interleaved form.  The multi variants
+allow the data to provided as perl arrays or as C<CArray[int32]> and
+the number of frames ( the number of frames is the number left channel,
+right channel pairs.)
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
+
+C<libmp3lame> doesn't provide the interleaved data option for this data
+type so it is emulated in perl code so it may be slower if used like that.
+
+The C<libmp3lame> documentation suggests that the scaling of the integer
+encoding may not be as good as for other data types, if you need to
+use this data type you should test this and provide your own scaling
+if necessary.
 
     multi method encode-int(@left, @right) returns Buf 
     multi method encode-int(@frames) returns Buf 
@@ -127,6 +164,21 @@ being used.
 
 =head3 method encode-long
 
+Encode the block of PCM data expressed as 64 bit integers to MP3 returning
+the data as unsigned 8 bit integers.  The input data can be provided
+either as separate channels or in interleaved form.  The multi variants
+allow the data to provided as perl arrays or as C<CArray[int64]> and
+the number of frames ( the number of frames is the number left channel,
+right channel pairs.)
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
+
+C<libmp3lame> doesn't provide the interleaved data option for this data
+type so it is emulated in perl code so it may be slower if used like that.
+
     multi method encode-long(@left, @right) returns Buf 
     multi method encode-long(@frames) returns Buf 
     multi method encode-long(@left, @right, :$raw!) returns RawEncode 
@@ -137,6 +189,18 @@ being used.
     multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode 
 
 =head3 method encode-float 
+
+Encode the block of PCM data expressed as 32 bit floating point numbers
+to MP3 returning the data as unsigned 8 bit integers.  The input data
+can be provided either as separate channels or in interleaved form.
+The multi variants allow the data to provided as perl arrays or as
+C<CArray[num32]> and the number of frames ( the number of frames is the
+number left channel, right channel pairs.)
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
 
     multi method encode-float(@left, @right) returns Buf 
     multi method encode-float(@frames) returns Buf 
@@ -149,6 +213,18 @@ being used.
 
 =head3 method encode-double
 
+Encode the block of PCM data expressed as 64 bit floating point numbers
+to MP3 returning the data as unsigned 8 bit integers.  The input data
+can be provided either as separate channels or in interleaved form.
+The multi variants allow the data to provided as perl arrays or as
+C<CArray[num64]> and the number of frames ( the number of frames is the
+number left channel, right channel pairs.)
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
+
     multi method encode-double(@left, @right) returns Buf 
     multi method encode-double(@frames) returns Buf 
     multi method encode-double(@left, @right, :$raw!) returns RawEncode 
@@ -159,6 +235,21 @@ being used.
     multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode 
 
 =head3 method encode-flush
+
+This returns (flushes) the last encoded data and should always be called
+after the last PCM data for a particular stream has been encoded. It
+may return up to 8000 bytes of data.
+
+If the C<:nogap> adverb is supplied then the padding at the end will
+be adjusted such that a subsequent track (or file) will appear to
+play seamlessly, typically this will be used with C<init-bitstream>
+which should be called after this and before sending further PCM data
+to create an (apparently) gapless stream.
+
+If the C<:raw> adverb is provided then the data will be returned as a
+two element array containing a C<CArray[uint8]> and an C<Int> with the
+number of elements in the array. Otherwise it will return a perl Array
+with the data.
 
     multi method encode-flush() returns Buf 
     multi method encode-flush(:$nogap!) returns Buf 
@@ -270,6 +361,8 @@ samplerate you may consider using another library such as 'libsamplerate'
 These will cause ID3 tags to be inserted into the output stream.  For some reason
 there are no getters for these in 'lame' so they all return an undefined L<Str>.
 
+Both ID3 v1 and v2 tags will be created.
+
 These are quite limited, if you are saving to a file and want finer control
 over the tags you might want to consider L<Audio::Taglib::Simple> which will let
 you add more tags more flexibly.
@@ -297,7 +390,7 @@ The year (this is a string that should look like a year e.g. "2015" )
 
 =head3 comment
 
-A comment.
+A comment. The id3v2 tag is created with a language of "XXX" for some reason.
 
 =end pod
 
