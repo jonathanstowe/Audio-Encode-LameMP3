@@ -510,7 +510,10 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         method comment() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_comment, &manage) is id3tag { }
 
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
-
+            if $rc < 0 {
+                X::LameError.new(message => "Error setting parameter").throw
+            }
+            $rc;
         }
 
         # utilities
