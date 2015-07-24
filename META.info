@@ -17,12 +17,13 @@
      "Audio::Encode::LameMP3" : "lib/Audio/Encode/LameMP3.pm"
   },
   "depends" : [
-    "AccessorFacade"
+    "AccessorFacade",
+    "NativeHelpers::Array"
   ],
   "test-depends" : [
     "Audio::Taglib::Simple",
     "Audio::Sndfile"
   ],
   "description" : "Encode PCM Audio data to MP3 in Perl 6 using a binding to liblame",
-  "version" : "v0.0.1"
+  "version" : "v0.0.2"
 }
