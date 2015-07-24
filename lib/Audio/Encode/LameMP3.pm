@@ -392,9 +392,10 @@ A comment. The id3v2 tag is created with a language of "XXX" for some reason.
 
 =end pod
 
-class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
+class Audio::Encode::LameMP3:ver<v0.0.2>:auth<github:jonathanstowe> {
     use NativeCall;
     use AccessorFacade;
+    use NativeHelpers::Array;
 
     # Output of ':raw' methods for notational convenience
     subset RawEncode of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray[uint8]) && ($_[1] ~~ Int);
@@ -517,11 +518,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
         }
 
         # utilities
-        sub copy-to-carray(@items, Mu $type) returns CArray {
-            my $array = CArray[$type].new;
-            $array[$_] = @items[$_] for ^@items.elems;
-            $array;
-        }
 
         sub get-buffer-size(Int $no-frames ) returns Int {
             my $num = ((1.25 * $no-frames) + 7200).Int;
@@ -532,11 +528,6 @@ class Audio::Encode::LameMP3:ver<v0.0.1>:auth<github:jonathanstowe> {
             my $buff =  CArray[uint8].new;
             $buff[$size] = 0;
             $buff;
-        }
-        sub copy-carray-to-buf(CArray $array, Int $no-elems) returns Buf {
-            my $buf = Buf.new;
-            $buf[$_] = $array[$_] for ^$no-elems;
-            $buf;
         }
 
         multi method encode(@left, @right, &encode-func, Mu $type ) returns Buf {
