@@ -392,7 +392,7 @@ A comment. The id3v2 tag is created with a language of "XXX" for some reason.
 
 =end pod
 
-class Audio::Encode::LameMP3:ver<v0.0.5>:auth<github:jonathanstowe> {
+class Audio::Encode::LameMP3:ver<v0.0.6>:auth<github:jonathanstowe> {
     use NativeCall;
     use AccessorFacade;
     use NativeHelpers::Array;
