@@ -2,6 +2,8 @@
 
 Encode PCM Audio data to MP3 in Perl 6 using a binding to liblame
 
+[![Build Status](https://travis-ci.org/jonathanstowe/Audio-Encode-LameMP3.svg?branch=master)](https://travis-ci.org/jonathanstowe/Audio-Encode-LameMP3)
+
 ## Description
 
 This module provides a simple bind to "lame" an MP3 encoding library.
