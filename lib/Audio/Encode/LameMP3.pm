@@ -392,7 +392,7 @@ A comment. The id3v2 tag is created with a language of "XXX" for some reason.
 
 =end pod
 
-class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
+class Audio::Encode::LameMP3:ver<0.0.10>:auth<github:jonathanstowe>:api<1.0> {
     use NativeCall;
     use AccessorFacade;
     use NativeHelpers::Array;
@@ -410,7 +410,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
         has Str $.message;
         has EncodeError $.error;
 
-        multi method message() {
+        multi method message( --> Str ) {
             if not $!message.defined {
                 $!message = do given $!error {
                     when BuffTooSmall {
@@ -442,7 +442,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
 
     class GlobalFlags is repr('CPointer') {
 
-        sub lame_init() returns GlobalFlags is native('mp3lame',v0) { * }
+        sub lame_init( --> GlobalFlags ) is native('mp3lame',v0) { * }
 
         method new(GlobalFlags:U: *%params) {
             my $lgf = lame_init();
@@ -492,23 +492,23 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
 
         sub id3tag_set_title(GlobalFlags, Str) is native('mp3lame',v0) { * }
 
-        method title() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_title, &manage) is id3tag { * }
+        method title( --> Str ) is rw is accessor-facade(&empty-get, &id3tag_set_title, &manage) is id3tag { * }
 
         sub id3tag_set_artist(GlobalFlags, Str) is native('mp3lame',v0) { * }
 
-        method artist() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_artist, &manage) is id3tag { }
+        method artist( --> Str ) is rw is accessor-facade(&empty-get, &id3tag_set_artist, &manage) is id3tag { }
 
         sub id3tag_set_album(GlobalFlags, Str) is native('mp3lame',v0) { * }
 
-        method album() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_album, &manage) is id3tag { }
+        method album( --> Str ) is rw is accessor-facade(&empty-get, &id3tag_set_album, &manage) is id3tag { }
 
         sub id3tag_set_year(GlobalFlags, Str) is native('mp3lame',v0) { * }
 
-        method year() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_year, &manage) is id3tag { }
+        method year( --> Str ) is rw is accessor-facade(&empty-get, &id3tag_set_year, &manage) is id3tag { }
 
         sub id3tag_set_comment(GlobalFlags, Str) is native('mp3lame',v0) { * }
 
-        method comment() returns Str is rw is accessor-facade(&empty-get, &id3tag_set_comment, &manage) is id3tag { }
+        method comment( --> Str ) is rw is accessor-facade(&empty-get, &id3tag_set_comment, &manage) is id3tag { }
 
         sub check(GlobalFlags $self, Int $rc, Str :$what = 'unknown method') {
             if $rc < 0 {
@@ -519,28 +519,28 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
 
         # utilities
 
-        sub get-buffer-size(Int $no-frames ) returns Int {
+        sub get-buffer-size(Int $no-frames --> Int ) {
             my $num = ((1.25 * $no-frames) + 7200).Int;
             $num;
         }
 
-        sub get-out-buffer(Int $size) returns CArray {
+        sub get-out-buffer(Int $size --> CArray ) {
             my $buff =  CArray[uint8].new;
             $buff[$size] = 0;
             $buff;
         }
 
-        multi method encode(@left, @right, &encode-func, Mu $type ) returns Buf {
+        multi method encode(@left, @right, &encode-func, Mu $type  --> Buf ) {
             my ($buffer, $bytes-out) = self.encode(@left, @right, &encode-func, $type, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func ) returns Buf {
+        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func --> Buf ) {
             my ($buffer, $bytes-out) = self.encode($left-in, $right-in, $frames, &encode-func, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode(@left, @right, &encode-func, Mu $type, :$raw!) returns RawEncode {
+        multi method encode(@left, @right, &encode-func, Mu $type, :$raw! --> RawEncode ) {
             if (@left.elems == @right.elems ) {
 
                 my $left-in   = copy-to-carray(@left, $type);
@@ -553,7 +553,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
             }
         }
 
-        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func, :$raw!)  returns RawEncode {
+        multi method encode(CArray $left-in, CArray $right-in, Int $frames, &encode-func, :$raw! --> RawEncode )  {
             my $buff-size = get-buffer-size($frames);
             my $buffer    = get-out-buffer($buff-size);
             my $bytes-out = &encode-func(self, $left-in, $right-in,  $frames, $buffer, $buff-size);
@@ -563,17 +563,17 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
             [$buffer, $bytes-out];
         }
 
-        multi method encode(@frames, &encode-func, Mu $type ) returns Buf {
+        multi method encode(@frames, &encode-func, Mu $type --> Buf ) {
             my ( $buffer, $bytes-out ) = self.encode(@frames, &encode-func, $type, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode(CArray $frames-in, Int $frames, &encode-func ) returns Buf {
+        multi method encode(CArray $frames-in, Int $frames, &encode-func --> Buf ) {
             my ( $buffer, $bytes-out ) = self.encode($frames-in, $frames, &encode-func, :raw ).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
 
-        multi method encode(@frames, &encode-func, Mu $type, :$raw! ) returns RawEncode {
+        multi method encode(@frames, &encode-func, Mu $type, :$raw! --> RawEncode ) {
             if (@frames.elems % 2 ) == 0  {
 
                 my $frames-in   = copy-to-carray(@frames, $type);
@@ -585,7 +585,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
             }
         }
 
-        multi method encode(CArray $frames-in, Int $frames, &encode-func, :$raw!) returns RawEncode {
+        multi method encode(CArray $frames-in, Int $frames, &encode-func, :$raw! --> RawEncode ) {
             my $buff-size = get-buffer-size($frames);
             my $buffer    = get-out-buffer($buff-size);
 
@@ -601,157 +601,157 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
         # from the enum EncodeError above
 
         # Non-interleaved inputs are left, right. num_samples is actually number of frames.
-        sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer(GlobalFlags, CArray[int16], CArray[int16], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-short(@left, @right) returns Buf {
+        multi method encode-short(@left, @right --> Buf ) {
             self.encode(@left, @right, &lame_encode_buffer, int16);
         }
 
-        multi method encode-short(@left, @right, :$raw!) returns RawEncode {
+        multi method encode-short(@left, @right, :$raw! --> RawEncode ) {
             self.encode(@left, @right, &lame_encode_buffer, int16, :raw);
         }
 
-        multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf {
+        multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames --> Buf ) {
             self.encode($left, $right, $frames, &lame_encode_buffer);
         }
 
-        multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw! --> RawEncode ) {
             self.encode($left, $right, $frames, &lame_encode_buffer, :raw);
         }
 
-        sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_interleaved(GlobalFlags, CArray[int16], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-short(@frames) returns Buf {
+        multi method encode-short(@frames --> Buf ) {
             self.encode(@frames, &lame_encode_buffer_interleaved, int16);
         }
 
-        multi method encode-short(@frames, :$raw!) returns RawEncode {
+        multi method encode-short(@frames, :$raw! --> RawEncode ) {
             self.encode(@frames, &lame_encode_buffer_interleaved, int16, :raw);
         }
 
-        multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf {
+        multi method encode-short(CArray[int16] $frames-in, Int $frames --> Buf ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved);
         }
 
-        multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw! --> RawEncode ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved, :raw);
         }
 
         # not sure what this one is about. The include file comment suggests it is ints but the signature suggests otherwise
-        sub lame_encode_buffer_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
         # seemed to be scaled to floats as we know them
-        sub lame_encode_buffer_ieee_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_ieee_float(GlobalFlags, CArray[num32], CArray[num32], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-float(@left, @right) returns Buf {
+        multi method encode-float(@left, @right --> Buf ) {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num32);
         }
-        multi method encode-float(@left, @right, :$raw!) returns RawEncode {
+        multi method encode-float(@left, @right, :$raw! --> RawEncode ) {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num32, :raw);
         }
-        multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf {
+        multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames --> Buf ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_ieee_float);
         }
-        multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw! --> RawEncode ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_ieee_float, :raw);
         }
 
-        sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_interleaved_ieee_float(GlobalFlags, CArray[num32], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-float(@frames ) returns Buf {
+        multi method encode-float(@frames --> Buf ) {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_float, num32);
         }
-        multi method encode-float(@frames, :$raw! ) returns RawEncode {
+        multi method encode-float(@frames, :$raw! --> RawEncode ) {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_float, num32, :raw);
         }
-        multi method encode-float(CArray[num32] $frames-in, Int $frames ) returns Buf {
+        multi method encode-float(CArray[num32] $frames-in, Int $frames --> Buf ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved_ieee_float);
         }
-        multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw! ) returns RawEncode {
+        multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw! --> RawEncode ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved_ieee_float, :raw);
         }
 
-        sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_ieee_double(GlobalFlags, CArray[num64], CArray[num64], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-double(@left, @right) returns Buf {
+        multi method encode-double(@left, @right --> Buf ) {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num64);
         }
-        multi method encode-double(@left, @right, :$raw!) returns RawEncode {
+        multi method encode-double(@left, @right, :$raw! --> RawEncode ) {
             self.encode(@left, @right, &lame_encode_buffer_ieee_float, num64, :raw);
         }
-        multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf {
+        multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames --> Buf ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_ieee_float);
         }
-        multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw! --> RawEncode ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_ieee_float, :raw);
         }
 
-        sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_interleaved_ieee_double(GlobalFlags, CArray[num64], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-double(@frames ) returns Buf {
+        multi method encode-double(@frames --> Buf ) {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_double, num64);
         }
-        multi method encode-double(@frames, :$raw! ) returns RawEncode {
+        multi method encode-double(@frames, :$raw! --> RawEncode ) {
             self.encode(@frames, &lame_encode_buffer_interleaved_ieee_double, num64, :raw);
         }
-        multi method encode-double(CArray[num64] $frames-in, Int $frames ) returns Buf {
+        multi method encode-double(CArray[num64] $frames-in, Int $frames --> Buf ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved_ieee_double);
         }
-        multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw! ) returns RawEncode {
+        multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw! --> RawEncode ) {
             self.encode($frames-in, $frames, &lame_encode_buffer_interleaved_ieee_double, :raw);
         }
 
         # ignoring the long variant as it appears to be a mistake
         # neither have an interleaved variant
-        sub lame_encode_buffer_long2(GlobalFlags, CArray[int64], CArray[int64], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_long2(GlobalFlags, CArray[int64], CArray[int64], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-long(@left, @right) returns Buf {
+        multi method encode-long(@left, @right --> Buf ) {
             self.encode(@left, @right, &lame_encode_buffer_long2, int64);
         }
 
-        multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+        multi method encode-long(@left, @right, :$raw! --> RawEncode ) {
             self.encode(@left, @right, &lame_encode_buffer_long2, int64, :raw);
         }
-        multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf {
+        multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames --> Buf ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_long2);
         }
 
-        multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw! --> RawEncode ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_long2, :raw);
         }
 
         # the include suggests that the scaling may be wonky on this.
-        sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_buffer_int(GlobalFlags, CArray[int32], CArray[int32], int32, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
-        multi method encode-int(@left, @right) returns Buf {
+        multi method encode-int(@left, @right --> Buf ) {
             self.encode(@left, @right, &lame_encode_buffer_int, int32);
         }
-        multi method encode-int(@left, @right, :$raw!) returns RawEncode {
+        multi method encode-int(@left, @right, :$raw! --> RawEncode ) {
             self.encode(@left, @right, &lame_encode_buffer_int, int32, :raw);
         }
 
-        multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf {
+        multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames --> Buf ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_int);
         }
-        multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode {
+        multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw! --> RawEncode ) {
             self.encode($left, $right, $frames, &lame_encode_buffer_int, :raw);
         }
 
         # The nogap variant means the stream can be reused or something return number of bytes (and I guess <0 is an error
-        sub lame_encode_flush(GlobalFlags, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_flush(GlobalFlags, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
         # nogap allows you to continue using the same encoder - useful for streaming
-        sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32) returns int32 is native('mp3lame',v0) { * }
+        sub lame_encode_flush_nogap(GlobalFlags, CArray[uint8], int32 --> int32 ) is native('mp3lame',v0) { * }
 
         # allocate an overly long buffer to take the last bit
-        multi method encode-flush(:$nogap!) returns Buf {
+        multi method encode-flush(:$nogap! --> Buf ) {
             my ( $buffer, $bytes-out) = self.encode-flush(:nogap, :raw).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
-        multi method encode-flush() returns Buf {
+        multi method encode-flush( --> Buf ) {
             my ( $buffer, $bytes-out) = self.encode-flush(:raw).list;
             copy-carray-to-buf($buffer, $bytes-out);
         }
-        multi method encode-flush(:$nogap! , :$raw!) returns RawEncode {
+        multi method encode-flush(:$nogap! , :$raw! --> RawEncode ) {
             my $buffer = get-out-buffer(8192);
             my $bytes-out = lame_encode_flush_nogap(self, $buffer, 8192);
 
@@ -760,7 +760,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
             }
             [$buffer, $bytes-out];
         }
-        multi method encode-flush(:$raw!) returns RawEncode {
+        multi method encode-flush(:$raw! --> RawEncode ) {
             my $buffer = get-out-buffer(8192);
             my $bytes-out = lame_encode_flush(self, $buffer, 8192);
 
@@ -771,96 +771,96 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
         }
 
 
-        sub lame_set_in_samplerate(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_in_samplerate(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_in_samplerate(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_in_samplerate(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method in-samplerate() returns Int is rw
+        method in-samplerate( --> Int ) is rw
             is accessor-facade(&lame_get_in_samplerate, &lame_set_in_samplerate, Code, &check) { }
 
-        sub lame_set_num_channels(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_num_channels(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_num_channels(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_num_channels(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method num-channels() returns Int
+        method num-channels( --> Int ) 
             is accessor-facade(&lame_get_num_channels, &lame_set_num_channels, Code, &check) { }
 
-        sub lame_set_brate(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_brate(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_brate(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_brate(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method bitrate() returns Int
+        method bitrate( --> Int ) 
             is accessor-facade(&lame_get_brate, &lame_set_brate, Code, &check) { }
 
-        sub lame_set_quality(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_quality(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_quality(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_quality(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method quality() returns Int
+        method quality( --> Int ) 
             is accessor-facade(&lame_get_quality, &lame_set_quality, Code, &check) { }
 
 
-        sub lame_set_mode(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_mode(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_mode(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_mode(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method mode() returns MPEG-Mode
+        method mode( --> MPEG-Mode ) 
             is accessor-facade(&lame_get_mode, &lame_set_mode, Code, &check ) { }
 
 
         # below less commonly used
 
-        sub lame_set_num_samples(GlobalFlags, uint64) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_num_samples(GlobalFlags) returns uint64 is native('mp3lame',v0) { * }
+        sub lame_set_num_samples(GlobalFlags, uint64 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_num_samples(GlobalFlags --> uint64 ) is native('mp3lame',v0) { * }
 
-        method num-samples() returns Int is rw
+        method num-samples( --> Int ) is rw
             is accessor-facade(&lame_get_num_samples, &lame_set_num_samples, Code, &check ) { }
 
 
-        sub lame_set_scale(GlobalFlags, num32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_scale(GlobalFlags) returns num32 is native('mp3lame',v0) { * }
+        sub lame_set_scale(GlobalFlags, num32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_scale(GlobalFlags --> num32 ) is native('mp3lame',v0) { * }
 
-        method scale() returns Num is rw
+        method scale( --> Num ) is rw
             is accessor-facade(&lame_get_scale, &lame_set_scale, Code, &check ) { }
 
-        sub lame_set_scale_left(GlobalFlags, num32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_scale_left(GlobalFlags) returns num32 is native('mp3lame',v0) { * }
+        sub lame_set_scale_left(GlobalFlags, num32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_scale_left(GlobalFlags --> num32 ) is native('mp3lame',v0) { * }
 
-        method scale-left() returns Num is rw
+        method scale-left( --> Num ) is rw
             is accessor-facade(&lame_get_scale_left, &lame_set_scale_left, Code, &check ) { }
 
-        sub lame_set_scale_right(GlobalFlags, num32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_scale_right(GlobalFlags) returns num32 is native('mp3lame',v0) { * }
+        sub lame_set_scale_right(GlobalFlags, num32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_scale_right(GlobalFlags --> num32 ) is native('mp3lame',v0) { * }
 
-        method scale-right() returns Num is rw
+        method scale-right( --> Num ) is rw
             is accessor-facade(&lame_get_scale_right, &lame_set_scale_right, Code, &check ) { }
 
-        sub lame_set_out_samplerate(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_out_samplerate(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_out_samplerate(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_out_samplerate(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method out-samplerate() returns Int is rw
+        method out-samplerate( --> Int ) is rw
             is accessor-facade(&lame_get_out_samplerate, &lame_set_out_samplerate, Code, &check ) { }
 
 
-        sub lame_set_analysis(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_analysis(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_analysis(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_analysis(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method set-analysis() returns Bool is rw
+        method set-analysis( --> Bool ) is rw
             is accessor-facade(&lame_get_analysis, &lame_set_analysis, Code, &check ) { }
 
 
-        sub lame_set_bWriteVbrTag(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_bWriteVbrTag(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_bWriteVbrTag(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_bWriteVbrTag(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method write-vbr-tag() returns Bool is rw
+        method write-vbr-tag( --> Bool ) is rw
             is accessor-facade(&lame_get_bWriteVbrTag, &lame_set_bWriteVbrTag, Code, &check ) { }
 
-        sub lame_set_decode_only(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_decode_only(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_decode_only(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_decode_only(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method decode-only() returns Bool is rw
+        method decode-only(--> Bool ) is rw
             is accessor-facade(&lame_get_decode_only, &lame_set_decode_only, Code, &check ) { }
 
 
-        sub lame_set_nogap_total(GlobalFlags, int32) returns int32 is native('mp3lame',v0) { * }
-        sub lame_get_nogap_total(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_set_nogap_total(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
+        sub lame_get_nogap_total(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method nogap-total() returns Int is rw
+        method nogap-total( --> Int ) is rw
             is accessor-facade(&lame_get_nogap_total, &lame_set_nogap_total, Code, &check ) { }
 
         sub lame_set_nogap_currentindex(GlobalFlags , int32) returns int32 is native('mp3lame',v0) { * }
@@ -965,7 +965,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
         sub lame_set_msgf  (GlobalFlags, &cb ( Str $fmt, *@args)) returns int32 is native('mp3lame',v0) { * }
 
 
-        sub lame_init_params(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_init_params(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
         method init() {
             my $rc = lame_init_params(self);
@@ -977,7 +977,7 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
 
         # This is not necessary but using flush_nogap and this it is possible to reuse
         # the same encoder which may be useful for streaming
-        sub lame_init_bitstream(GlobalFlags) returns int32 is native('mp3lame',v0) { * }
+        sub lame_init_bitstream(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
         method init-bitstream() {
             my $rc = lame_init_bitstream(self);
@@ -1062,225 +1062,225 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
 	    return $left, $right;
     }
 
-    multi method encode-short(@left, @right) returns Buf {
+    multi method encode-short(@left, @right --> Buf ) {
         self.init();
         $!gfp.encode-short(@left, @right);
     }
 
-    multi method encode-short(@frames) returns Buf {
+    multi method encode-short(@frames --> Buf ) {
         self.init();
         $!gfp.encode-short(@frames);
     }
-    multi method encode-short(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-short(@left, @right, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-short(@left, @right, :raw);
     }
 
-    multi method encode-short(@frames, :$raw!) returns RawEncode {
+    multi method encode-short(@frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-short(@frames, :raw);
     }
 
-    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf {
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-short($left, $right, $frames);
     }
 
-    multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf {
+    multi method encode-short(CArray[int16] $frames-in, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-short($frames-in, $frames);
     }
-    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-short($left, $right, $frames, :raw);
     }
 
-    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-short($frames-in, $frames, :raw);
     }
 
-    multi method encode-int(@left, @right) returns Buf {
+    multi method encode-int(@left, @right --> Buf ) {
         self.init();
         $!gfp.encode-int(@left, @right);
     }
 
-    multi method encode-int(@frames) returns Buf {
+    multi method encode-int(@frames --> Buf ) {
         self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-int($left, $right);
     }
 
-    multi method encode-int(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-int(@left, @right, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-int(@left, @right, :raw);
     }
 
-    multi method encode-int(@frames, :$raw!) returns RawEncode {
+    multi method encode-int(@frames, :$raw! --> RawEncode ) {
         self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-int($left, $right, :raw);
     }
 
-    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf {
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-int($left, $right, $frames);
     }
 
-    multi method encode-int(CArray[int32] $frames-in, Int $frames) returns Buf {
+    multi method encode-int(CArray[int32] $frames-in, Int $frames --> Buf ) {
         self.init();
         my ( $left, $right ) = uninterleave($frames-in, $frames);
         $!gfp.encode-int($left, $right, $frames);
     }
 
-    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-int($left, $right, $frames, :raw);
     }
 
-    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         my ( $left, $right ) = uninterleave($frames-in, $frames);
         $!gfp.encode-int($left, $right, $frames, :raw);
     }
 
-    multi method encode-long(@left, @right) returns Buf {
+    multi method encode-long(@left, @right --> Buf ) {
         self.init();
         $!gfp.encode-long(@left, @right);
     }
 
-    multi method encode-long(@frames) returns Buf {
+    multi method encode-long(@frames --> Buf ) {
         self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-long($left, $right);
     }
 
-    multi method encode-long(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-long(@left, @right, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-long(@left, @right, :raw);
     }
 
-    multi method encode-long(@frames, :$raw!) returns RawEncode {
+    multi method encode-long(@frames, :$raw! --> RawEncode ) {
         self.init();
         my ( $left, $right ) = uninterleave(@frames);
         $!gfp.encode-long($left, $right, :raw);
     }
 
-    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf {
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-long($left, $right, $frames);
     }
 
-    multi method encode-long(CArray[int64] $frames-in, Int $frames) returns Buf {
+    multi method encode-long(CArray[int64] $frames-in, Int $frames --> Buf ) {
         self.init();
         my ( $left, $right ) = uninterleave($frames-in, $frames);
         $!gfp.encode-long($left, $right, $frames);
     }
 
-    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-long($left, $right, $frames, :raw);
     }
 
-    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         my ( $left, $right ) = uninterleave($frames-in, $frames);
         $!gfp.encode-long($left, $right, $frames, :raw);
     }
 
-    multi method encode-float(@left, @right) returns Buf {
+    multi method encode-float(@left, @right --> Buf ) {
         self.init();
         $!gfp.encode-float(@left, @right);
     }
 
-    multi method encode-float(@frames) returns Buf {
+    multi method encode-float(@frames --> Buf ) {
         self.init();
         $!gfp.encode-float(@frames);
     }
 
-    multi method encode-float(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-float(@left, @right, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-float(@left, @right, :raw);
     }
 
-    multi method encode-float(@frames, :$raw!) returns RawEncode {
+    multi method encode-float(@frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-float(@frames, :raw);
     }
 
-    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf {
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-float($left, $right, $frames);
     }
 
-    multi method encode-float(CArray[num32] $frames-in, Int $frames) returns Buf {
+    multi method encode-float(CArray[num32] $frames-in, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-float($frames-in, $frames);
     }
 
-    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-float($left, $right, $frames, :raw);
     }
 
-    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-float($frames-in, $frames, :raw);
     }
 
-    multi method encode-double(@left, @right) returns Buf {
+    multi method encode-double(@left, @right --> Buf ) {
         self.init();
         $!gfp.encode-double(@left, @right);
     }
 
-    multi method encode-double(@frames) returns Buf {
+    multi method encode-double(@frames --> Buf ) {
         self.init();
         $!gfp.encode-double(@frames);
     }
 
-    multi method encode-double(@left, @right, :$raw!) returns RawEncode {
+    multi method encode-double(@left, @right, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-double(@left, @right, :raw);
     }
 
-    multi method encode-double(@frames, :$raw!) returns RawEncode {
+    multi method encode-double(@frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-double(@frames, :raw);
     }
 
-    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf {
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-double($left, $right, $frames);
     }
 
-    multi method encode-double(CArray[num64] $frames-in, Int $frames) returns Buf {
+    multi method encode-double(CArray[num64] $frames-in, Int $frames --> Buf ) {
         self.init();
         $!gfp.encode-double($frames-in, $frames);
     }
 
-    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-double($left, $right, $frames, :raw);
     }
 
-    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode {
+    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-double($frames-in, $frames, :raw);
     }
 
-    multi method encode-flush() returns Buf {
+    multi method encode-flush( --> Buf ) {
         self.init();
         $!gfp.encode-flush();
     }
-    multi method encode-flush(:$nogap!) returns Buf {
+    multi method encode-flush(:$nogap! --> Buf ) {
         self.init();
         $!gfp.encode-flush(:nogap);
     }
-    multi method encode-flush(:$raw!) returns RawEncode {
+    multi method encode-flush(:$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-flush(:raw);
     }
-    multi method encode-flush(:$nogap!, :$raw!) returns RawEncode {
+    multi method encode-flush(:$nogap!, :$raw! --> RawEncode ) {
         self.init();
         $!gfp.encode-flush(:nogap, :raw);
     }
@@ -1291,9 +1291,9 @@ class Audio::Encode::LameMP3:ver<0.0.9>:auth<github:jonathanstowe> {
         }
     }
 
-    sub get_lame_version() returns Str is native('mp3lame',v0) { * }
+    sub get_lame_version( --> Str ) is native('mp3lame',v0) { * }
 
-    method lame-version() returns Version {
+    method lame-version( --> Version ) {
         my $v = get_lame_version();
         Version.new($v);
     }
