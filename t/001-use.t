@@ -2,7 +2,6 @@
 
 use v6;
 use Test;
-use lib 'lib';
 
 use-ok('Audio::Encode::LameMP3', 'Can use Audio::Encode::LameMP3');
 
