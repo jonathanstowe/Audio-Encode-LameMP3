@@ -1,3 +1,6 @@
+v0.0.12		Fri 22 Jan 18:51:44 GMT 2021
+	* Use GH actions for CI
+	* Spring clean and rename
 v0.0.11		Sun 13 Jan 15:33:37 GMT 2019
 	* Spring clean and upload to CPAN
 v0.0.10		Tue Jan 24 21:30:37 2017 +0000 

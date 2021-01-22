@@ -1,4 +1,4 @@
-#!/usr/bin/env perl6
+#!/usr/bin/env raku
 
 use Audio::Encode::LameMP3;
 use Audio::Sndfile;

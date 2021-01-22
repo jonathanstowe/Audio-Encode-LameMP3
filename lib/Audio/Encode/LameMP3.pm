@@ -46,12 +46,12 @@ supported by the lame library.
 The interface is somewhat simplified in comparison to that of lame
 and some of the esoteric or rarely used features may not be supported.
 
-Because marshalling large arrays and buffers between perl space and the
+Because marshalling large arrays and buffers between Raku space and the
 native world may be too slow for some use cases the interface provides
 for passing and returning native CArrays (and their sizes) for the use
-of other native bindings (e.g. L<Audio::Sndfile>, L<Audio::Libshout>) where 
+of other native bindings (e.g. L<Audio::Sndfile>, L<Audio::Libshout>) where
 speed may prove important, which , for me at least, is quite a common
-use-case.  The C<p6lame_encode> example demonstrates this way of using
+use-case.  The C<raku-lame-encode> example demonstrates this way of using
 the interface.
 
 =head2 METHODS
@@ -62,7 +62,7 @@ adverb they will return a C<RawEncode> sub-set which is defined as an Array
 of two elements the first being a C<CArray[uint8]> containing the encoded
 data and an C<Int> indicating how many items there are.  This is for ease of
 interoperating with modules such as L<Audio::Sndfile> and L<Audio::Libshout>
-and avoids the cost of marshalling to/from perl Arrays where it is not needed.
+and avoids the cost of marshalling to/from Raku Arrays where it is not needed.
 
 =head3 method new
 
@@ -74,7 +74,7 @@ defaults.
 
 =head3 method init
 
-    method init() 
+    method init()
 
 This initialises the encoder ready to start the encoding.  It may be called after
 all the rquired parameters have been set, however it will be called for you when
@@ -83,7 +83,7 @@ parameters after C<init> has been called.
 
 =head3 method init-bitstream
 
-    method init-bitstream() 
+    method init-bitstream()
 
 This can be used to re-initialise the encoder's internal state in order that it
 can be re-used for the encoding of a new source (e.g. a new file.)  It should only
@@ -96,23 +96,23 @@ This is not necessary on the first initialisation as it is called by C<init()>
 
 =head3 method lame-version
 
-    method lame-version() returns Version 
+    method lame-version() returns Version
 
 This returns a L<Version> object indicating the version of C<libmp3lame> that is
-being used.  
+being used.
 
 =head3 method encode-short
 
 Encode the block of PCM data expressed as signed 16 bit integers to
 MP3 returning the data as unsigned 8 bit integers.  The input data
 can be provided either as separate channels or in interleaved form.
-The multi variants allow the data to provided as perl arrays or as
+The multi variants allow the data to provided as Raku arrays or as
 C<CArray[int16]> and the number of frames ( the number of frames is the
 number left channel, right channel pairs.)
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
 Tests seem to demonstrate that this is the fastest of the encoding
@@ -120,117 +120,117 @@ methods, which is convenient as 16 bit PCM is probably the most common
 format for general use (being that which is used on CDs.)
 
 
-    multi method encode-short(@left, @right) returns Buf 
-    multi method encode-short(@frames) returns Buf 
-    multi method encode-short(@left, @right, :$raw!) returns RawEncode 
-    multi method encode-short(@frames, :$raw!) returns RawEncode 
-    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf 
-    multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf 
-    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode 
-    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-short(@left, @right) returns Buf
+    multi method encode-short(@frames) returns Buf
+    multi method encode-short(@left, @right, :$raw!) returns RawEncode
+    multi method encode-short(@frames, :$raw!) returns RawEncode
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames) returns Buf
+    multi method encode-short(CArray[int16] $frames-in, Int $frames) returns Buf
+    multi method encode-short(CArray[int16] $left, CArray[int16] $right, Int $frames, :$raw!) returns RawEncode
+    multi method encode-short(CArray[int16] $frames-in, Int $frames, :$raw!) returns RawEncode
 
 =head3 method encode-int
 
 Encode the block of PCM data expressed as 32 bit integers to MP3 returning
 the data as unsigned 8 bit integers.  The input data can be provided
 either as separate channels or in interleaved form.  The multi variants
-allow the data to provided as perl arrays or as C<CArray[int32]> and
+allow the data to provided as Raku arrays or as C<CArray[int32]> and
 the number of frames ( the number of frames is the number left channel,
 right channel pairs.)
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
 C<libmp3lame> doesn't provide the interleaved data option for this data
-type so it is emulated in perl code so it may be slower if used like that.
+type so it is emulated in Raku code so it may be slower if used like that.
 
 The C<libmp3lame> documentation suggests that the scaling of the integer
 encoding may not be as good as for other data types, if you need to
 use this data type you should test this and provide your own scaling
 if necessary.
 
-    multi method encode-int(@left, @right) returns Buf 
-    multi method encode-int(@frames) returns Buf 
-    multi method encode-int(@left, @right, :$raw!) returns RawEncode 
-    multi method encode-int(@frames, :$raw!) returns RawEncode 
-    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf 
-    multi method encode-int(CArray[int32] $frames-in, Int $frames) returns Buf 
-    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode 
-    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-int(@left, @right) returns Buf
+    multi method encode-int(@frames) returns Buf
+    multi method encode-int(@left, @right, :$raw!) returns RawEncode
+    multi method encode-int(@frames, :$raw!) returns RawEncode
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames) returns Buf
+    multi method encode-int(CArray[int32] $frames-in, Int $frames) returns Buf
+    multi method encode-int(CArray[int32] $left, CArray[int32] $right, Int $frames, :$raw!) returns RawEncode
+    multi method encode-int(CArray[int32] $frames-in, Int $frames, :$raw!) returns RawEncode
 
 =head3 method encode-long
 
 Encode the block of PCM data expressed as 64 bit integers to MP3 returning
 the data as unsigned 8 bit integers.  The input data can be provided
 either as separate channels or in interleaved form.  The multi variants
-allow the data to provided as perl arrays or as C<CArray[int64]> and
+allow the data to provided as Raku arrays or as C<CArray[int64]> and
 the number of frames ( the number of frames is the number left channel,
 right channel pairs.)
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
 C<libmp3lame> doesn't provide the interleaved data option for this data
-type so it is emulated in perl code so it may be slower if used like that.
+type so it is emulated in Raku code so it may be slower if used like that.
 
-    multi method encode-long(@left, @right) returns Buf 
-    multi method encode-long(@frames) returns Buf 
-    multi method encode-long(@left, @right, :$raw!) returns RawEncode 
-    multi method encode-long(@frames, :$raw!) returns RawEncode 
-    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf 
-    multi method encode-long(CArray[int64] $frames-in, Int $frames) returns Buf 
-    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode 
-    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-long(@left, @right) returns Buf
+    multi method encode-long(@frames) returns Buf
+    multi method encode-long(@left, @right, :$raw!) returns RawEncode
+    multi method encode-long(@frames, :$raw!) returns RawEncode
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames) returns Buf
+    multi method encode-long(CArray[int64] $frames-in, Int $frames) returns Buf
+    multi method encode-long(CArray[int64] $left, CArray[int64] $right, Int $frames, :$raw!) returns RawEncode
+    multi method encode-long(CArray[int64] $frames-in, Int $frames, :$raw!) returns RawEncode
 
-=head3 method encode-float 
+=head3 method encode-float
 
 Encode the block of PCM data expressed as 32 bit floating point numbers
 to MP3 returning the data as unsigned 8 bit integers.  The input data
 can be provided either as separate channels or in interleaved form.
-The multi variants allow the data to provided as perl arrays or as
+The multi variants allow the data to provided as Raku arrays or as
 C<CArray[num32]> and the number of frames ( the number of frames is the
 number left channel, right channel pairs.)
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
-    multi method encode-float(@left, @right) returns Buf 
-    multi method encode-float(@frames) returns Buf 
-    multi method encode-float(@left, @right, :$raw!) returns RawEncode 
-    multi method encode-float(@frames, :$raw!) returns RawEncode 
-    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf 
-    multi method encode-float(CArray[num32] $frames-in, Int $frames) returns Buf 
-    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode 
-    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-float(@left, @right) returns Buf
+    multi method encode-float(@frames) returns Buf
+    multi method encode-float(@left, @right, :$raw!) returns RawEncode
+    multi method encode-float(@frames, :$raw!) returns RawEncode
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames) returns Buf
+    multi method encode-float(CArray[num32] $frames-in, Int $frames) returns Buf
+    multi method encode-float(CArray[num32] $left, CArray[num32] $right, Int $frames, :$raw!) returns RawEncode
+    multi method encode-float(CArray[num32] $frames-in, Int $frames, :$raw!) returns RawEncode
 
 =head3 method encode-double
 
 Encode the block of PCM data expressed as 64 bit floating point numbers
 to MP3 returning the data as unsigned 8 bit integers.  The input data
 can be provided either as separate channels or in interleaved form.
-The multi variants allow the data to provided as perl arrays or as
+The multi variants allow the data to provided as Raku arrays or as
 C<CArray[num64]> and the number of frames ( the number of frames is the
 number left channel, right channel pairs.)
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
-    multi method encode-double(@left, @right) returns Buf 
-    multi method encode-double(@frames) returns Buf 
-    multi method encode-double(@left, @right, :$raw!) returns RawEncode 
-    multi method encode-double(@frames, :$raw!) returns RawEncode 
-    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf 
-    multi method encode-double(CArray[num64] $frames-in, Int $frames) returns Buf 
-    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode 
-    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode 
+    multi method encode-double(@left, @right) returns Buf
+    multi method encode-double(@frames) returns Buf
+    multi method encode-double(@left, @right, :$raw!) returns RawEncode
+    multi method encode-double(@frames, :$raw!) returns RawEncode
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames) returns Buf
+    multi method encode-double(CArray[num64] $frames-in, Int $frames) returns Buf
+    multi method encode-double(CArray[num64] $left, CArray[num64] $right, Int $frames, :$raw!) returns RawEncode
+    multi method encode-double(CArray[num64] $frames-in, Int $frames, :$raw!) returns RawEncode
 
 =head3 method encode-flush
 
@@ -246,19 +246,19 @@ to create an (apparently) gapless stream.
 
 If the C<:raw> adverb is provided then the data will be returned as a
 two element array containing a C<CArray[uint8]> and an C<Int> with the
-number of elements in the array. Otherwise it will return a perl Array
+number of elements in the array. Otherwise it will return a Raku Array
 with the data.
 
-    multi method encode-flush() returns Buf 
-    multi method encode-flush(:$nogap!) returns Buf 
-    multi method encode-flush(:$raw!) returns RawEncode 
-    multi method encode-flush(:$nogap!, :$raw!) returns RawEncode 
+    multi method encode-flush() returns Buf
+    multi method encode-flush(:$nogap!) returns Buf
+    multi method encode-flush(:$raw!) returns RawEncode
+    multi method encode-flush(:$nogap!, :$raw!) returns RawEncode
 
 =head2 CONFIGURATION ATTRIBUTES
 
 All of those can be supplied to the constructor or can be set as attributes
 on a constructed object before it is initialised.  Some are more useful
-than others as the library provides sensible defaults.  
+than others as the library provides sensible defaults.
 
 The lame library provides a wider range of settable parameters that are not
 exposed as I either don't understand them or they don't seem to be useful.
@@ -283,7 +283,7 @@ universally understood are 64, 128, 192 and 320.
 
 =head3 quality
 
-This is an integer value between 0 and 9 that indicates the quality 
+This is an integer value between 0 and 9 that indicates the quality
 (and hence the speed) of the encoding, where 0 is the best (and slowest)
 and 9 is the least good and fastest.  The default is 5.  Most applications
 will typically use a value between 3 and 7 but your ears and patience might
@@ -294,23 +294,23 @@ better than mine.
 This is a value of the C<enum> L<Audio::Encode::LameMP3::MPEG-Mode> with the
 following items:
 
-=item Stereo 
+=item Stereo
 
 For lame this setting is probably un-necessary.  The stereo channels are
 encoded separately and this may result in greater loss of stereo field
 information than C<JointStereo>.
 
-=item JointStereo 
+=item JointStereo
 
 This is the most common setting for most uses.  The stereo channel separation
 is essentially encoded losslessly in lame.
 
-=item DualChannel 
+=item DualChannel
 
 This is not implemented as a separate mode by lame, setting this will have no
 effect.
 
-=item Mono 
+=item Mono
 
 The input source is to be encoded as mono.  If interleaved data is presented
 then it will be read as if it represents a single channel.  If separate
@@ -348,7 +348,7 @@ will be used.
 
 =head3 out-samplerate
 
-This is the target samplerate of the encoded output (i.e. the samplerate of the 
+This is the target samplerate of the encoded output (i.e. the samplerate of the
 resulting PCM if the output were decoded.) The default is the same as the input
 samplerate and it probably isn't necessary to change it unless some target software
 or hardware requires a particular samplerate. If you want finer control over the
@@ -461,7 +461,7 @@ class Audio::Encode::LameMP3:ver<0.0.11>:auth<github:jonathanstowe>:api<1.0> {
         # If we want to add id3 tags in the stream we need to set this before we
         # start adding them so call it in the constructor
         sub id3tag_init(GlobalFlags) is native('mp3lame',v0) { * }
-        
+
         method id3tag_init() {
             id3tag_init(self);
             # everyone wants v2 tags right?
@@ -780,26 +780,26 @@ class Audio::Encode::LameMP3:ver<0.0.11>:auth<github:jonathanstowe>:api<1.0> {
         sub lame_set_num_channels(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
         sub lame_get_num_channels(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method num-channels( --> Int ) 
+        method num-channels( --> Int )
             is accessor-facade(&lame_get_num_channels, &lame_set_num_channels, Code, &check) { }
 
         sub lame_set_brate(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
         sub lame_get_brate(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method bitrate( --> Int ) 
+        method bitrate( --> Int )
             is accessor-facade(&lame_get_brate, &lame_set_brate, Code, &check) { }
 
         sub lame_set_quality(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
         sub lame_get_quality(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method quality( --> Int ) 
+        method quality( --> Int )
             is accessor-facade(&lame_get_quality, &lame_set_quality, Code, &check) { }
 
 
         sub lame_set_mode(GlobalFlags, int32 --> int32 ) is native('mp3lame',v0) { * }
         sub lame_get_mode(GlobalFlags --> int32 ) is native('mp3lame',v0) { * }
 
-        method mode( --> MPEG-Mode ) 
+        method mode( --> MPEG-Mode )
             is accessor-facade(&lame_get_mode, &lame_set_mode, Code, &check ) { }
 
 
@@ -887,7 +887,7 @@ class Audio::Encode::LameMP3:ver<0.0.11>:auth<github:jonathanstowe>:api<1.0> {
 
         # The API docs and the include differ in the necessity of calling this.
         # As we'll only be "streaming" I'll hedge.
-        
+
         sub lame_mp3_tags_fid(GlobalFlags, Pointer) is native('mp3lame',v0) { * }
 
         method mp3-tags() {
@@ -1203,4 +1203,4 @@ class Audio::Encode::LameMP3:ver<0.0.11>:auth<github:jonathanstowe>:api<1.0> {
     }
 }
 
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

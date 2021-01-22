@@ -1,12 +1,12 @@
 # Audio-Encode-LameMP3
 
-Encode PCM Audio data to MP3 in Perl 6 using a binding to liblame
+Encode PCM Audio data to MP3 in Raku using a binding to liblame
 
-[![Build Status](https://travis-ci.org/jonathanstowe/Audio-Encode-LameMP3.svg?branch=master)](https://travis-ci.org/jonathanstowe/Audio-Encode-LameMP3)
+![Build Status](https://github.com/jonathanstowe/Audio-Encode-LameMP3/workflows/CI/badge.svg)
 
 ## Description
 
-This module provides a simple bind to "lame" an MP3 encoding library.
+This module provides a simple binding to "lame" an MP3 encoding library.
 
 http://lame.sourceforge.net/
 
@@ -16,12 +16,12 @@ supported by the lame library.
 The interface is somewhat simplified in comparison to that of lame
 and some of the esoteric or rarely used features may not be supported.
 
-Because marshalling large arrays and buffers between perl space and the
+Because marshalling large arrays and buffers between Raku space and the
 native world may be too slow for some use cases the interface provides
 for passing and returning native CArrays (and their sizes) for the use
 of other native bindings (e.g. Audio::Sndfile, Audio::Libshout) where 
 speed may prove important, which , for me at least, is quite a common
-use-case.  The 'p6lame_encode' example demonstrates this way of using
+use-case.  The 'raku-lame-encode' example demonstrates this way of using
 the interface.
 
 For interest the first thing I encoded was:
@@ -48,8 +48,7 @@ I am however unlikely to be able to offer help with installing it this
 way, also bear in mind that if you install a newer version than I have
 to test with then this may not work.
 
-Assuming you have a working Rakudo Perl 6 installation you should be able to
-install this with *zef* :
+Assuming you have a working Rakudo installation you should be able to install this with *zef* :
 
     # From the source directory
    
@@ -85,4 +84,4 @@ the licensing of that library.
 Please see the [LICENCE](LICENCE) file in the distribution regarding
 the licence for this library module.
 
-© Jonathan Stowe 2015, 2016, 2017
+© Jonathan Stowe 2015 - 2021

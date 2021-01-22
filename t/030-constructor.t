@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 use v6;
 use Test;
 
@@ -15,4 +15,4 @@ diag "testing with lame version " ~ $v;
 
 done-testing;
 
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

@@ -1,4 +1,4 @@
-#!/usr/bin/env perl6
+#!/usr/bin/env raku
 
 use Audio::Encode::LameMP3;
 use Audio::Sndfile:ver<v0.0.2>;
@@ -38,4 +38,4 @@ multi sub MAIN(Str :$in-file!, Str :$out-file!, Int :$bufsize = 512, Int :$bitra
 
 }
 
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

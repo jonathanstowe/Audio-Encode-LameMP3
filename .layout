@@ -63,10 +63,6 @@
       "type": "file"
     },
     {
-      "name": "Build.pm",
-      "type": "file"
-    },
-    {
       "type": "directory",
       "purpose": "lib",
       "children": [
