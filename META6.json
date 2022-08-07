@@ -1,5 +1,5 @@
 {
-  "version": "0.0.13",
+  "version": "0.0.14",
   "author": "Jonathan Stowe <jns+git@gellyfish.co.uk>",
   "source-url": "git://github.com/jonathanstowe/Audio-Encode-LameMP3.git",
   "name": "Audio::Encode::LameMP3",
