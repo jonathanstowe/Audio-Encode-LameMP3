@@ -1,5 +1,5 @@
 {
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": "Jonathan Stowe <jns+git@gellyfish.co.uk>",
   "source-url": "git://github.com/jonathanstowe/Audio-Encode-LameMP3.git",
   "name": "Audio::Encode::LameMP3",
@@ -50,6 +50,6 @@
     "Jonathan Stowe <jns+git@gellyfish.co.uk>"
   ],
   "provides": {
-    "Audio::Encode::LameMP3": "lib/Audio/Encode/LameMP3.pm"
+    "Audio::Encode::LameMP3": "lib/Audio/Encode/LameMP3.rakumod"
   }
 }

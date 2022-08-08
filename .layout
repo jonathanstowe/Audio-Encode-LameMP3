@@ -76,7 +76,7 @@
               "name": "Encode",
               "children": [
                 {
-                  "name": "LameMP3.pm",
+                  "name": "LameMP3.rakumod",
                   "type": "file"
                 }
               ]
