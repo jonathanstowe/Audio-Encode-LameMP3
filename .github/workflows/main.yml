@@ -31,6 +31,9 @@ jobs:
     - name: Raku version
       run: raku -v
 
+    - name: Update Zef
+      run:  zef upgrade zef
+
     - name: Install dependencies
       run: zef install --deps-only --/test --test-depends .
 
