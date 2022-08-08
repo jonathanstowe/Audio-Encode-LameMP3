@@ -32,7 +32,7 @@ jobs:
       run: raku -v
 
     - name: Update Zef
-      run:  zef upgrade zef
+      run:  zef install --force-install https://github.com/ugexe/zef.git
 
     - name: Install dependencies
       run: zef install --deps-only --/test --test-depends .
